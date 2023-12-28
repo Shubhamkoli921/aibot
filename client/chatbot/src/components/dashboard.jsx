@@ -1,6 +1,6 @@
 // Dashboard.js
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { MdDashboard } from "react-icons/md";
 import { LuUsers } from "react-icons/lu";
 import { ImProfile } from "react-icons/im";
@@ -11,36 +11,36 @@ import User from '../pages/user';
 import Report from '../pages/report';
 
 const Dashboard = () => {
-  const [chatCount, setChatCount] = useState(0);
-  const [todayChats, setTodayChats] = useState([]);
+  // const [chatCount, setChatCount] = useState(0);
+  // const [todayChats, setTodayChats] = useState([]);
   const [content,setContent] = useState(null)
 
   const handleOnclick = (section)=>{
     setContent(section === content ? null : section);
   }
 
-  useEffect(() => {
-    // Fetch data from the Flask backend for the dashboard
-    const fetchDashboardData = async () => {
-      try {
-        const response = await fetch('your-backend-url/dashboard', {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
+  // useEffect(() => {
+  //   // Fetch data from the Flask backend for the dashboard
+  //   const fetchDashboardData = async () => {
+  //     try {
+  //       const response = await fetch('your-backend-url/dashboard', {
+  //         headers: {
+  //           Authorization: `Bearer ${localStorage.getItem('token')}`,
+  //         },
+  //       });
 
-        const data = await response.json();
+  //       const data = await response.json();
 
-        // Update state with fetched data
-        setChatCount(data.chatCount);
-        setTodayChats(data.todayChats);
-      } catch (error) {
-        console.error('Error fetching dashboard data', error);
-      }
-    };
+  //       // Update state with fetched data
+  //       setChatCount(data.chatCount);
+  //       setTodayChats(data.todayChats);
+  //     } catch (error) {
+  //       console.error('Error fetching dashboard data', error);
+  //     }
+  //   };
 
-    fetchDashboardData();
-  }, []); // Empty dependency array ensures the effect runs only once on component mount
+  //   fetchDashboardData();
+  // }, []); // Empty dependency array ensures the effect runs only once on component mount
 
   return (
     <>
@@ -74,7 +74,7 @@ const Dashboard = () => {
             </div>
         </div>
             <div className='w-ful h-full ml-2 '>
-            <div className='p-4 bg-slate-200 w-[980px] rounded-xl h-full text-black'>
+            <div className='p-4 bg-slate-100 w-[980px] rounded-xl h-full text-black'>
                 {content === 'section1' && <div><Profiles/></div>}
                 {content === 'section2' && <div><DashBoardData/></div>}
                 {content === 'section3' && <div><User/></div>}
