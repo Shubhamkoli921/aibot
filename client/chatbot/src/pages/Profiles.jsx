@@ -22,7 +22,7 @@ const Profiles = () => {
 
                     </div>
                     <div className='w-full justify-end flex p-4 items-center'>
-                        <IoMdSettings  size={30} className='cursor-pointer animate-spin' />
+                        <IoMdSettings  size={30} className='cursor-pointer hover:animate-spin' />
                     </div>
                </div>
                 <hr className='w-[850px] m-auto'  />
