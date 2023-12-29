@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import {BrowserRouter , Routes , Route} from 'react-router-dom'
 // import Login from './components/login';
 import Dashboard from './components/dashboard';
+import SignUp from './routes/signup';
+import Login from './routes/login';
 // import Profiles from './pages/Profiles';
 // import User from './pages/user';
 // import Report from './pages/report';
@@ -25,9 +27,9 @@ const App = () => {
     <>
       <BrowserRouter>
         <Routes>
-         
           <Route path='/dashboard' element={<Dashboard    />} />
-          
+          {/* <Route path='/authentication/signup' element={<SignUp    />} /> */}
+          <Route path='/' element={<Login    />} />
         </Routes>
       </BrowserRouter>
     </>

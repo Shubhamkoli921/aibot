@@ -13,7 +13,7 @@ import Report from '../pages/report';
 const Dashboard = () => {
   // const [chatCount, setChatCount] = useState(0);
   // const [todayChats, setTodayChats] = useState([]);
-  const [content,setContent] = useState(null)
+  const [content,setContent] = useState('section1')
 
   const handleOnclick = (section)=>{
     setContent(section === content ? null : section);
