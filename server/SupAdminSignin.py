@@ -4,13 +4,14 @@ from pymongo import MongoClient
 from werkzeug.security import check_password_hash
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from flask_cors import CORS
-
 app = Flask(__name__)
 
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return jsonify({'message': 'Flask and MongoDB are connected!'})
+
+
 
 
 app.config["MONGO_URI"] = "mongodb://localhost:27017/chatbot"
@@ -18,7 +19,7 @@ app.config['JWT_SECRET_KEY'] = '1F76961362D832146966AEEFE7C8CEB06BE3A9BEFD40B270
 
 mongo = PyMongo(app)
 jwt = JWTManager(app)
-CORS(app, resources={r"/superadmin/*": {"origins": "*"}})  # Apply CORS only to /superadmin routes
+CORS(app, resources={"/superadmin/*": {"origins": "*"}})  # Apply CORS only to /superadmin routes
 
 client = MongoClient('mongodb://127.0.0.1:27017/')
 db = client['chatbot']
@@ -37,15 +38,19 @@ if information.count_documents({}) == 0:
 @app.route('/superadmin/login', methods=['POST'])
 def super_admin_login():
     data = request.get_json()
-    username = data.get('superadmin')
-    password = data.get('Superadminpassword')
+    username = data.get('username')
+    password = data.get('password')
 
-    super_admin = mongo.db.superadmin.find_one({'username': username})
-    if super_admin and check_password_hash(super_admin['password'], password):
-        access_token = create_access_token(identity=str(super_admin['_id']))
-        return jsonify(access_token=access_token), 200
+    # super_admin = mongo.db.superadmin.find_one({'username': username})
+    # if super_admin and check_password_hash(super_admin['password'], password):
+    #     access_token = create_access_token(identity=str(super_admin['_id']))
+    #     return jsonify(access_token=access_token), 200
+    # else:
+    #     return jsonify({'error': 'Invalid credentials'}), 401
+    if username == 'superadmin' and password == 'superadminpassword':
+        return jsonify({'success': True, 'message': 'Login successful by server'})
     else:
-        return jsonify({'error': 'Invalid credentials'}), 401
+        return jsonify({'success': False, 'message': 'Login failed by server'})
 
 
 @app.route('/protected', methods=['GET'])
