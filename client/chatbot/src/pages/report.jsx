@@ -1,28 +1,45 @@
-import React from 'react'
-import { Bar } from 'react-chartjs-2';
+import React from "react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+} from "recharts";
 
 const Report = () => {
-
-  const data = {
-    labels: ['January', 'February', 'March', 'April', 'May'],
-    datasets: [
-      {
-        label: 'Monthly Sales',
-        backgroundColor: 'rgba(75,192,192,0.2)',
-        borderColor: 'rgba(75,192,192,1)',
-        borderWidth: 1,
-        hoverBackgroundColor: 'rgba(75,192,192,0.4)',
-        hoverBorderColor: 'rgba(75,192,192,1)',
-        data: [65, 59, 80, 81, 56],
-      },
-    ],
-  };
+  const data = [
+    { name: "January", sales: 65 },
+    { name: "February", sales: 59 },
+    { name: "March", sales: 80 },
+    { name: "April", sales: 81 },
+    { name: "May", sales: 56 },
+  ];
   return (
     <div>
-    <h2>Monthly Sales Bar Chart</h2>
-    <Bar data={data} />
-  </div>
-  )
-}
+      <h2>Monthly Sales Line Chart</h2>
+      <LineChart
+        width={500}
+        height={300}
+        data={data}
+        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+      >
+        <XAxis dataKey="name" />
+        <YAxis />
+        <CartesianGrid strokeDasharray="3 3" />
+        <Tooltip />
+        <Legend />
+        <Line
+          type="monotone"
+          dataKey="sales"
+          stroke="#8884d8"
+          activeDot={{ r: 8 }}
+        />
+      </LineChart>
+    </div>
+  );
+};
 
-export default Report
+export default Report;

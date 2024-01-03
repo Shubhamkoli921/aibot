@@ -23,6 +23,8 @@ const DashBoardData = () => {
     { name: "May", sales: 56 },
   ];
 
+  
+
   return (
     <div className="w-full h-full">
       <div className="flex p-2 w-full justify-center">
