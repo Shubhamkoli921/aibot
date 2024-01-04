@@ -8,10 +8,10 @@ const Profiles = () => {
   return (
     <>
         <div className='w-full h-full'>
-            <div className='h-[300px] p-2 flex object-contain justify-center'>
-                <img className='w-full object-cover rounded-md' src={pbackground} alt="" />
+            <div className='h-[120px] p-2 flex object-contain justify-center'>
+                <img className='w-full h-full object-cover rounded-md' src={pbackground} alt="" />
             </div>
-            <div className='bg-white max-w-[900px] flex flex-col rounded-lg relative shadow-md   shadow-black -mt-10 m-auto h-full'>
+            <div className='bg-white max-w-[900px] flex flex-col rounded-lg relative shadow-md shadow-black -mt-10 m-auto h-full'>
                <div className='flex w-full justify-around'>
                     <div className='w-full p-4 flex items-center'>
                         <img src={profilepic} className='w-[60px] rounded-full' alt="" />

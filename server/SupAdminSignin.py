@@ -1,17 +1,16 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity, create_access_token
 from flask_pymongo import PyMongo
 from pymongo import MongoClient
-from werkzeug.security import check_password_hash
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
-from flask_cors import CORS
+from werkzeug.security import check_password_hash, generate_password_hash
+
 app = Flask(__name__)
 
 
 @app.route('/')
 def index():
     return jsonify({'message': 'Flask and MongoDB are connected!'})
-
-
 
 
 app.config["MONGO_URI"] = "mongodb://localhost:27017/chatbot"
@@ -25,6 +24,7 @@ client = MongoClient('mongodb://127.0.0.1:27017/')
 db = client['chatbot']
 
 information = db.superadmin
+admins_collection = db.admins
 
 # Check if data exists before inserting
 if information.count_documents({}) == 0:
