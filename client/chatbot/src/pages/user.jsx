@@ -1,12 +1,38 @@
 import React from "react";
 import { IoPersonAddSharp } from "react-icons/io5";
+import { MdEdit } from "react-icons/md";
+import '../css/style.css'
 // import { IoPersonAddSharp } from "react-icons/tb";
 
 const User = () => {
   const data = [
-    { id: 1, name: "John Doe", age: 25, occupation: "Engineer" },
-    { id: 2, name: "Jane Smith", age: 30, occupation: "Designer" },
-    { id: 3, name: "Bob Johnson", age: 28, occupation: "Developer" },
+    {
+      logo: 1,
+      name: "John Doe",
+      businessName: "Trading",
+      email: "shubhamkk922@gmail.com",
+      phone: 9890845263,
+      city: "pune",
+      pincode: 411039,
+    },
+    {
+      logo: 2,
+      name: "shubham Doe",
+      businessName: "Information Technology",
+      email: "shubhamkk922@gmail.com",
+      phone: 9890845263,
+      city: "pune",
+      pincode: 411039,
+    },
+    {
+      logo: 3,
+      name: "aditya Doe",
+      businessName: "Interior",
+      email: "shubhamkk922@gmail.com",
+      phone: 9890845263,
+      city: "pune",
+      pincode: 411039,
+    },
   ];
 
   return (
@@ -67,29 +93,51 @@ const User = () => {
           </div>
         </div>
       </div>
-      <div className="container mx-auto my-8">
-      <h2 className="text-2xl font-semibold mb-4">User Information Table</h2>
-      <table className="border-collapse border w-full">
-        <thead className="bg-gray-200">
-          <tr>
-            <th className="border p-2">ID</th>
-            <th className="border p-2">Name</th>
-            <th className="border p-2">Age</th>
-            <th className="border p-2">Occupation</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((user) => (
-            <tr key={user.id} className="hover:bg-gray-100">
-              <td className="border p-2">{user.id}</td>
-              <td className="border p-2">{user.name}</td>
-              <td className="border p-2">{user.age}</td>
-              <td className="border p-2">{user.occupation}</td>
+      <div className="container mx-auto my-8  p-4 flex justify-center ">
+        <h2 className="text-2xl font-semibold absolute w-[900px]  shadow-md shadow-blue-300  bg-blue-500 p-4 text-white rounded-xl">User Information Table</h2>
+        <table className="flex flex-col rounded-xl w-full bg-white p-4 mt-10   ">
+          <thead className="mt-5">
+            <tr className="grid grid-cols-9 text-sm text-gray-600">
+              <th className=" p-2 col-span-1">Logo</th>
+              <th className=" p-2">Owner Name</th>
+              <th className=" p-2">Business Name</th>
+              <th className=" p-2 col-span-2  ">Email</th>
+              <th className=" p-2">Phone</th>
+              <th className=" p-2">City</th>
+              <th className=" p-2">Pincode</th>
+              <th className="p-2">Edit/Action</th>
+              {/* <th className="p-2">Action</th> */}
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {data.map((user) => (
+              <tr
+                key={user.id}
+                className="hover:bg-gray-100 grid grid-cols-9 w-full text-xs "
+              >
+                <td className="p-2 text-center">{user.logo}</td>
+                <td className="p-2 text-center">{user.name}</td>
+                <td className="p-2 text-center">{user.businessName}</td>
+                <td className="p-2 text-center col-span-2  ">{user.email}</td>
+                <td className="p-2 text-center">{user.phone}</td>
+                <td className="p-2 text-center">{user.city}</td>
+                <td className="p-2 text-center">{user.pincode}</td>
+                <td className="p-2 flex justify-between text-center">
+                  <MdEdit size={18} className="cursor-pointer" />
+                  <label class="switch">
+                    <input type="checkbox" />
+                    <div class="slider"></div>
+                    <div class="slider-card">
+                      <div class="slider-card-face slider-card-front"></div>
+                      <div class="slider-card-face slider-card-back"></div>
+                    </div>
+                  </label>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
