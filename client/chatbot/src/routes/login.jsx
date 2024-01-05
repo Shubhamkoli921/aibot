@@ -48,8 +48,8 @@ const Login = () => {
   };
 
   return (
-    <div className="max-w-[1300px] p-2 m-auto h-screen bg-slate-100">
-      <div className="object-contain absolute ">
+    <div className="w-full p-2 m-auto h-screen bg-slate-100">
+      <div className="object-contain absolute w-full h-screen ">
         <img
           src={signibg}
           className="object-cover h-screen rounded-xl w-full"

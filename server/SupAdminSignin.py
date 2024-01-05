@@ -1,9 +1,8 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity, create_access_token
+from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
 from flask_pymongo import PyMongo
 from pymongo import MongoClient
-from werkzeug.security import check_password_hash, generate_password_hash
 
 app = Flask(__name__)
 
@@ -24,7 +23,6 @@ client = MongoClient('mongodb://127.0.0.1:27017/')
 db = client['chatbot']
 
 information = db.superadmin
-admins_collection = db.admins
 
 # Check if data exists before inserting
 if information.count_documents({}) == 0:

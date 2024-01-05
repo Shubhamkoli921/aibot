@@ -102,7 +102,7 @@ const DashBoardData = () => {
         </div>
       </div>
       {/* dfsdfsdfsfsdfsdfsdf */}
-      <div className="flex p-2 w-full ">
+      <div className="flex p-2 w-full justify-center  ">
         <div className="flex justify-center gap-4 items-center absolute mt-10  ">
           <div className="flex justify-center w-full ">
             <div className="w-[280px] bg-green-500 h-[200px] rounded-md shadow-md shadow-green-300 absolute top-0 -mt-10">

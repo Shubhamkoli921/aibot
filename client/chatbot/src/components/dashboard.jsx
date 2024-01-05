@@ -45,7 +45,7 @@ const Dashboard = () => {
   return (
     <>
     <div className='flex h-screen w-full p-4'>
-        <div className='w-full h-full overflow-auto bg-slate-900 text-white rounded-2xl'>
+        <div className='w-[300px] h-full overflow-auto bg-slate-900 text-white rounded-2xl'>
             <div className='flex text-center justify-center items-center h-[50px]'>
                 chatbot.Ai
             </div>
@@ -73,8 +73,8 @@ const Dashboard = () => {
             </div>
             </div>
         </div>
-            <div className='w-ful h-screen ml-2 '>
-            <div className='p-4 bg-slate-100 w-[980px] rounded-xl h-screen text-black'>
+            <div className='w-full h-screen ml-2 '>
+            <div className='p-4 bg-slate-100  rounded-xl h-screen text-black'>
                 {content === 'section1' && <div><Profiles/></div>}
                 {content === 'section2' && <div><DashBoardData/></div>}
                 {content === 'section3' && <div><User/></div>}
