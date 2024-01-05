@@ -1,35 +1,27 @@
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
-from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
-from flask_pymongo import PyMongo
 from pymongo import MongoClient
+from dotenv import load_dotenv
+import os
 
 app = Flask(__name__)
+CORS(app)
 
-
-@app.route('/')
-def index():
-    return jsonify({'message': 'Flask and MongoDB are connected!'}) 0
-
-
-# app.config["MONGO_URI"] = "mongodb://localhost:27017/chatbot"
-app.config['JWT_SECRET_KEY'] = '1F76961362D832146966AEEFE7C8CEB06BE3A9BEFD40B2707FBCEC32E436BB44'
-
-mongo = PyMongo(app)
-jwt = JWTManager(app)
-CORS(app, resources={"/superadmin/*": {"origins": "*"}})  # Apply CORS only to /superadmin routes
-
-atlas_connection_string="mongodb+srv://shubhamkk922:hAMBXpK5pD0DYLbu@chatbot.aejeldk.mongodb.net/?retryWrites=true&w=majority"
+# Replace the connection string with your MongoDB Atlas connection string
+atlas_connection_string = os.getenv("MONGO_URI")
 client = MongoClient(atlas_connection_string)
 db = client['chatbot']
+# collection = db['superadmin']
+
 
 information = db.superadmin
+# admins_collection = db.admins
 
 # Check if data exists before inserting
 if information.count_documents({}) == 0:
     users = [
         {'username': 'superadmin', 'password': 'superadminpassword', 'role': 'superadmin'},
-        {'username': 'admin1', 'password': 'admin1password', 'role': 'admin'},
+        # {'username': 'admin1', 'password': 'admin1password', 'role': 'admin'},
     ]
     information.insert_many(users)
 
@@ -50,17 +42,6 @@ def super_admin_login():
         return jsonify({'success': True, 'message': 'Login successful by server'})
     else:
         return jsonify({'success': False, 'message': 'Login failed by server'})
-
-
-@app.route('/protected', methods=['GET'])
-@jwt_required()
-def protected():
-    current_user_id = get_jwt_identity()
-    super_admin = mongo.db.superadmin.find_one({'username': current_user_id})
-    if super_admin:
-        return jsonify(logged_in_as='super admin'), 200
-    else:
-        return jsonify({'error': 'Invalid token'}), 401
 
 
 if __name__ == '__main__':

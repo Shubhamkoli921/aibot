@@ -19,7 +19,7 @@ const DashBoardData = () => {
     { name: "January", sales: 25 },
     { name: "February", sales: 59 },
     { name: "March", sales: 60 },
-    { name: "April", sales: 81 },
+    { name: "April", sales: 811 },
     { name: "May", sales: 56 },
   ];
 
