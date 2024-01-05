@@ -10,17 +10,18 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    return jsonify({'message': 'Flask and MongoDB are connected!'})
+    return jsonify({'message': 'Flask and MongoDB are connected!'}) 0
 
 
-app.config["MONGO_URI"] = "mongodb://localhost:27017/chatbot"
+# app.config["MONGO_URI"] = "mongodb://localhost:27017/chatbot"
 app.config['JWT_SECRET_KEY'] = '1F76961362D832146966AEEFE7C8CEB06BE3A9BEFD40B2707FBCEC32E436BB44'
 
 mongo = PyMongo(app)
 jwt = JWTManager(app)
 CORS(app, resources={"/superadmin/*": {"origins": "*"}})  # Apply CORS only to /superadmin routes
 
-client = MongoClient('mongodb://127.0.0.1:27017/')
+atlas_connection_string="mongodb+srv://shubhamkk922:hAMBXpK5pD0DYLbu@chatbot.aejeldk.mongodb.net/?retryWrites=true&w=majority"
+client = MongoClient(atlas_connection_string)
 db = client['chatbot']
 
 information = db.superadmin
