@@ -9,10 +9,10 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    return jsonify({'message': 'Flask and MongoDB are connected!'}) 0
+    return jsonify({'message': 'Flask and MongoDB are connected!'}) 
 
 
-# app.config["MONGO_URI"] = "mongodb://localhost:27017/chatbot"
+app.config["MONGO_URI"] = "mongodb://localhost:27017/chatbot"
 app.config['JWT_SECRET_KEY'] = '1F76961362D832146966AEEFE7C8CEB06BE3A9BEFD40B2707FBCEC32E436BB44'
 
 mongo = PyMongo(app)

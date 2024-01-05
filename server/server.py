@@ -1,8 +1,9 @@
-from flask import Flask, jsonify, request
-from flask_cors import CORS
-from pymongo import MongoClient
-from dotenv import load_dotenv
 import os
+from flask import Flask, jsonify, request, render_template
+from flask_cors import CORS
+from flask_jwt_extended import create_access_token
+from pymongo import MongoClient
+from werkzeug.security import check_password_hash, generate_password_hash
 
 app = Flask(__name__)
 CORS(app)
@@ -15,7 +16,7 @@ db = client['chatbot']
 
 
 information = db.superadmin
-# admins_collection = db.admins
+admin_info = db.admin
 
 # Check if data exists before inserting
 if information.count_documents({}) == 0:
@@ -42,6 +43,45 @@ def super_admin_login():
         return jsonify({'success': True, 'message': 'Login successful by server'})
     else:
         return jsonify({'success': False, 'message': 'Login failed by server'})
+
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+
+@app.route('/admin/signup', methods=['POST'])
+def admin_signup():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+
+    existing_admin = admin_info.find_one({'username': username})
+    if existing_admin:
+        return jsonify({'error': 'Username already exists'}), 400
+
+    hashed_password = generate_password_hash(password)
+    new_admin = {
+        'username': username,
+        'password': hashed_password,
+        'role': 'admin'
+    }
+    admin_info.insert_one(new_admin)
+    return jsonify({'message': 'Admin created successfully'}), 201
+
+
+@app.route('/admin/login', methods=['POST'])
+def admin_login():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+
+    admin = admin_info.find_one({'username': username})
+    if admin and check_password_hash(admin['password'], password):
+        access_token = create_access_token(identity=admin['_id'])
+        return jsonify(access_token=access_token), 200
+    else:
+        return jsonify({'error': 'Invalid credentials'}), 401
 
 
 if __name__ == '__main__':
