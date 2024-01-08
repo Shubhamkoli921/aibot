@@ -7,10 +7,11 @@ import {
   FaLinkedin,
 } from "react-icons/fa";
 import axios from "axios";
+import { useAuth } from "../authentication/authContext";
 
-const Login = () => {
+const Login = ({ onLogin }) => {
   const navigate = useNavigate();
-
+  const { login } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
@@ -26,25 +27,32 @@ const Login = () => {
         // navigate('/dashboard')
         if (response.ok) {
           // Successful login
+          console.log("login successfully bu frontend" , response)
+          navigate('/dashboard')
           return response.json();
         } else {
           // Failed login
           throw new Error("Login failed");
         }
       })
-      .then((data) => {
-        if (data.success === true) {
-          console.log("login ", data.success);
-          navigate('/dashboard')
-          alert('successfully login')
-        } else {
-          console.log("failed", data.success);
-          alert('login failed')
+      .then((data)=>{
+        if(data.access_token){
+          alert("login succusffully done")
+          console.log(data.access_token);
+        }
+        else{
+          alert("failed")
+          console.log("failed");
         }
       })
+      
+
       .catch((error) => {
         console.error("Login failed:", error.message);
       });
+
+    const userData = { username, password };
+    login(userData);
   };
 
   return (
