@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import signibg from "../assets/signin.jpg";
+import signibg from "../../assets/signin.jpg";
 import { useNavigate } from "react-router-dom";
 import {
   FaInstagramSquare,
@@ -7,7 +7,8 @@ import {
   FaLinkedin,
 } from "react-icons/fa";
 import axios from "axios";
-import { useAuth } from "../authentication/authContext";
+import { useAuth } from "../../authentication/authContext";
+// import { useAuth } from "../../authentication/authContext";
 
 const Login = ({ onLogin }) => {
   const navigate = useNavigate();
