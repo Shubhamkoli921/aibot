@@ -1,18 +1,22 @@
 import os
 from flask import Flask, jsonify, request, render_template
 from flask_cors import CORS
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import create_access_token, JWTManager
 from pymongo import MongoClient
 from werkzeug.security import check_password_hash, generate_password_hash
+from bson import json_util
+import json
 
 app = Flask(__name__)
 CORS(app)
+jwt = JWTManager(app)
 
 # Replace the connection string with your MongoDB Atlas connection string
 atlas_connection_string = os.getenv("MONGO_URI")
 client = MongoClient(atlas_connection_string)
 db = client['chatbot']
 # collection = db['superadmin']
+app.config['JWT_SECRET_KEY'] = '1F76961362D832146966AEEFE7C8CEB06BE3A9BEFD40B2707FBCEC32E436BB44'
 
 
 information = db.superadmin
@@ -47,6 +51,8 @@ def super_admin_login():
 
 @app.route('/')
 def index():
+    # for _ in admin.find():
+    #     return json.dumps(i, indent=4, default=json_util.default)
     return render_template('index.html')
 
 
@@ -78,7 +84,8 @@ def admin_login():
 
     admin = admin_info.find_one({'username': username})
     if admin and check_password_hash(admin['password'], password):
-        access_token = create_access_token(identity=admin['_id'])
+        user_id = str(admin['_id'])
+        access_token = create_access_token(identity=user_id)
         return jsonify(access_token=access_token), 200
     else:
         return jsonify({'error': 'Invalid credentials'}), 401
