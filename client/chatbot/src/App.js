@@ -1,18 +1,20 @@
 // src/App.js
 import React, { useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-// import Login from './components/login';
-import Dashboard from "./components/dashboard";
-import SignUp from "./routes/signup";
-import Login from "./routes/login";
-import Err from "./routes/erro";
-// import Profiles from './pages/Profiles';
-// import User from './pages/user';
-// import Report from './pages/report';
-// import Signup from './components/signup';
-// import Home from './components/home';
+
+
+import { AuthProvider, useAuth } from "./superadmin/authentication/authContext";
+import Dashboard from "./superadmin/components/dashboard";
+import Login from "./superadmin/routes/superadmin/login";
+import AdminLogin from "./admin/routes/adminlogin";
+import AdminSignup from "./admin/routes/adminsignup";
+import Hello from "./admin/components/hello";
+import PrivateRoute from "./privateroutes/privateroutes";
+// import PrivateRoute from "./privateroutes/privateroutes";
+
 
 const App = () => {
+  const { user } = useAuth();
   return (
     // <div>
     //   {user ? (
@@ -22,14 +24,31 @@ const App = () => {
     //   )}
     // </div>
     <>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/dashboard" element={<Dashboard />} />
-          {/* <Route path='/authentication/signup' element={<SignUp    />} /> */}
-          <Route path="/" element={<Login />} />
-          <Route path="/error" element={<Err />} />
-        </Routes>
-      </BrowserRouter>
+      hello plz provide routes
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+
+            <Route path="/dashboard" element={<Dashboard />} />
+
+            <Route path="/superlogin" element={<Login />} />
+            <Route path="/adminlogin" element={<AdminLogin />} />
+            <Route path="/adminsignup" element={<AdminSignup />} />
+            {/* <Route path='/private' element={<PrivateRoute />}>
+              <Route path='/private' element={<Hello />} />
+            </Route> */}
+            <Route
+              path="/private"
+              element={
+                <PrivateRoute>
+                  <Hello />
+                </PrivateRoute>
+              }
+            />
+            {/* <PrivateRoute path="/private" element={<Hello />} /> */}
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
     </>
   );
 };
