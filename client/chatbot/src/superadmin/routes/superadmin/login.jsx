@@ -7,12 +7,12 @@ import {
   FaLinkedin,
 } from "react-icons/fa";
 import axios from "axios";
-import { useAuth } from "../../authentication/authContext";
+// import { useAuth } from "../../authentication/authContext";
 // import { useAuth } from "../../authentication/authContext";
 
 const Login = ({ onLogin }) => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  // const { login } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
@@ -52,8 +52,8 @@ const Login = ({ onLogin }) => {
         console.error("Login failed:", error.message);
       });
 
-    const userData = { username, password };
-    login(userData);
+    // const userData = { username, password };
+    // login(userData);
   };
 
   return (
