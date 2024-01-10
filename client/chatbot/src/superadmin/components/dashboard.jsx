@@ -9,10 +9,10 @@ import DashBoardData from '../pages/dashboardData';
 import Profiles from '../pages/Profiles';
 import User from '../pages/user';
 import Report from '../pages/report';
-import { useAuth } from '../authentication/authContext';
+// import { useAuth } from '../authentication/authContext';
 
 const Dashboard = () => {
-    const { user, logout } = useAuth();
+    // const { user, logout } = useAuth();
     // const [chatCount, setChatCount] = useState(0);
     // const [todayChats, setTodayChats] = useState([]);
     const [content, setContent] = useState('section2')
@@ -49,7 +49,7 @@ const Dashboard = () => {
             <div className='flex h-screen w-full p-4'>
                 <div className='w-full h-full overflow-auto bg-slate-900 text-white rounded-2xl'>
                     <div className='flex text-center justify-center items-center mt-2'>
-                        Welcome, {user && user.username}!
+                        {/* Welcome, {user && user.username}! */}
                         chatbot.Ai
                     </div>
                     <div className='flex m-4 items-center'>
@@ -71,7 +71,7 @@ const Dashboard = () => {
                             </div>
                         </div>
                         <div className='flex bottom-0 m-4'>
-                            <li onClick={logout} className='p-2 mt-2 cursor-pointer bg-blue-400 rounded-md flex items-center h-[40px] justify-center w-full'><TbLogout2 className='m-2' />Log out</li>
+                            <li  className='p-2 mt-2 cursor-pointer bg-blue-400 rounded-md flex items-center h-[40px] justify-center w-full'><TbLogout2 className='m-2' />Log out</li>
                         </div>
                     </div>
 

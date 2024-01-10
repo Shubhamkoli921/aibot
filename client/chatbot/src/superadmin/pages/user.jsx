@@ -37,63 +37,72 @@ const User = () => {
 
   return (
     <div className="w-full h-full">
-      <div className="flex p-2 w-full justify-center">
-        <div className=" flex flex-col p-2 m-2 w-[215px]  bg-white shadow h-full rounded-2xl">
-          <div className="flex p-4 justify-between">
-            <div className="w-[50px] h-[50px] shadow-sm flex items-center justify-center   shadow-black bg-gradient-to-tr from-blue-500 to-purple-600 -mt-10 rounded-lg  ">
-              <IoPersonAddSharp className="text-white" size={30} />
+      <div className="flex flex-col">
+        <div className="flex p-2 w-full justify-center">
+          <div className=" flex flex-col p-2 m-2 w-[215px]  bg-white shadow h-full rounded-2xl">
+            <div className="flex p-4 justify-between">
+              <div className="w-[50px] h-[50px] shadow-sm flex items-center justify-center   shadow-black bg-gradient-to-tr from-blue-500 to-purple-600 -mt-10 rounded-lg  ">
+                <IoPersonAddSharp className="text-white" size={30} />
+              </div>
+              <div className="flex flex-col justify-end">
+                <span className="text-gray-400 text-md">Total User's</span>
+                <span className="text-right font-bold text-xl">281</span>
+              </div>
             </div>
-            <div className="flex flex-col justify-end">
-              <span className="text-gray-400 text-md">Total User's</span>
-              <span className="text-right font-bold text-xl">281</span>
-            </div>
-          </div>
-          <hr className="mb-2 flex w-[150px] justify-center m-auto" />
-          <div>
-            <h1 className="text-green-500 font-bold">
-              +55%{" "}
-              <span className=" font-normal text-gray-500">than last week</span>
-            </h1>
-          </div>
-        </div>
-        <div className=" flex flex-col p-2 m-2 w-[215px]  bg-white  shadow h-full rounded-2xl">
-          <div className="flex p-4 justify-between">
-            <div className="w-[50px] h-[50px] shadow-sm flex items-center justify-center    shadow-black bg-gradient-to-tr from-blue-500 to-purple-600 -mt-10 rounded-lg  ">
-              <IoPersonAddSharp className="text-white" size={30} />
-            </div>
-            <div className="flex flex-col justify-end">
-              <span className="text-gray-400 text-md">Active User's</span>
-              <span className="text-right font-bold text-xl">281</span>
+            <hr className="mb-2 flex w-[150px] justify-center m-auto" />
+            <div>
+              <h1 className="text-green-500 font-bold">
+                +55%{" "}
+                <span className=" font-normal text-gray-500">than last week</span>
+              </h1>
             </div>
           </div>
-          <hr className="mb-2 flex w-[150px] justify-center m-auto" />
-          <div>
-            <h1 className="text-green-500 font-bold">
-              +55%{" "}
-              <span className=" font-normal text-gray-500">than last week</span>
-            </h1>
-          </div>
-        </div>
-        <div className=" flex flex-col p-2 m-2 w-[215px]  bg-white shadow h-full rounded-2xl">
-          <div className="flex p-4 justify-between">
-            <div className="w-[50px] h-[50px] shadow-sm flex items-center justify-center   shadow-black bg-gradient-to-tr from-blue-500 to-purple-600 -mt-10 rounded-lg  ">
-              <IoPersonAddSharp className="text-white" size={30} />
+          <div className=" flex flex-col p-2 m-2 w-[215px]  bg-white  shadow h-full rounded-2xl">
+            <div className="flex p-4 justify-between">
+              <div className="w-[50px] h-[50px] shadow-sm flex items-center justify-center    shadow-black bg-gradient-to-tr from-blue-500 to-purple-600 -mt-10 rounded-lg  ">
+                <IoPersonAddSharp className="text-white" size={30} />
+              </div>
+              <div className="flex flex-col justify-end">
+                <span className="text-gray-400 text-md">Active User's</span>
+                <span className="text-right font-bold text-xl">281</span>
+              </div>
             </div>
-            <div className="flex flex-col justify-end">
-              <span className="text-gray-400 text-md">In-Active User's</span>
-              <span className="text-right font-bold text-xl">281</span>
+            <hr className="mb-2 flex w-[150px] justify-center m-auto" />
+            <div>
+              <h1 className="text-green-500 font-bold">
+                +55%{" "}
+                <span className=" font-normal text-gray-500">than last week</span>
+              </h1>
             </div>
           </div>
-          <hr className="mb-2 flex w-[150px] justify-center m-auto" />
-          <div>
-            <h1 className="text-green-500 font-bold">
-              +55%{" "}
-              <span className=" font-normal text-gray-500">than last week</span>
-            </h1>
+          <div className=" flex flex-col p-2 m-2 w-[215px]  bg-white shadow h-full rounded-2xl">
+            <div className="flex p-4 justify-between">
+              <div className="w-[50px] h-[50px] shadow-sm flex items-center justify-center   shadow-black bg-gradient-to-tr from-blue-500 to-purple-600 -mt-10 rounded-lg  ">
+                <IoPersonAddSharp className="text-white" size={30} />
+              </div>
+              <div className="flex flex-col justify-end">
+                <span className="text-gray-400 text-md">In-Active User's</span>
+                <span className="text-right font-bold text-xl">281</span>
+              </div>
+            </div>
+            <hr className="mb-2 flex w-[150px] justify-center m-auto" />
+            <div>
+              <h1 className="text-green-500 font-bold">
+                +55%{" "}
+                <span className=" font-normal text-gray-500">than last week</span>
+              </h1>
+            </div>
           </div>
         </div>
       </div>
-      <div className="container mx-auto my-8  p-4 flex justify-center ">
+    </div>
+  );
+};
+
+export default User;
+
+
+{/* <div className="container mx-auto my-8  p-4 flex justify-center ">
         <h2 className="text-2xl font-semibold absolute w-[900px]  shadow-md shadow-blue-300  bg-blue-500 p-4 text-white rounded-xl">User Information Table</h2>
         <table className="flex flex-col rounded-xl w-full bg-white p-4 mt-10   ">
           <thead className="mt-5">
@@ -106,7 +115,7 @@ const User = () => {
               <th className=" p-2">City</th>
               <th className=" p-2">Pincode</th>
               <th className="p-2">Edit/Action</th>
-              {/* <th className="p-2">Action</th> */}
+              <th className="p-2">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -137,9 +146,4 @@ const User = () => {
             ))}
           </tbody>
         </table>
-      </div>
-    </div>
-  );
-};
-
-export default User;
+      </div> */}

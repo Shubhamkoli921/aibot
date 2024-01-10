@@ -3,18 +3,18 @@ import React, { useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 
-import { AuthProvider, useAuth } from "./superadmin/authentication/authContext";
+// import { AuthProvider, useAuth } from "./superadmin/authentication/authContext";
 import Dashboard from "./superadmin/components/dashboard";
 import Login from "./superadmin/routes/superadmin/login";
 import AdminLogin from "./admin/routes/adminlogin";
 import AdminSignup from "./admin/routes/adminsignup";
-import Hello from "./admin/components/hello";
-import PrivateRoute from "./privateroutes/privateroutes";
+// import Hello from "./admin/components/hello";
+// import PrivateRoute from "./privateroutes/privateroutes";
 // import PrivateRoute from "./privateroutes/privateroutes";
 
 
 const App = () => {
-  const { user } = useAuth();
+  // const { user } = useAuth();
   return (
     // <div>
     //   {user ? (
@@ -25,32 +25,22 @@ const App = () => {
     // </div>
     <>
       hello plz provide routes
-      <AuthProvider>
+      {/* <AuthProvider> */}
         <BrowserRouter>
           <Routes>
 
             <Route path="/dashboard" element={<Dashboard />} />
 
             <Route path="/superlogin" element={<Login />} />
-            <Route path="/adminlogin" element={<AdminLogin />} />
-            <Route path="/adminsignup" element={<AdminSignup />} />
-            {/* <Route path='/private' element={<PrivateRoute />}>
-              <Route path='/private' element={<Hello />} />
-            </Route> */}
-            <Route
-              path="/private"
-              element={
-                <PrivateRoute>
-                  <Hello />
-                </PrivateRoute>
-              }
-            />
-            {/* <PrivateRoute path="/private" element={<Hello />} /> */}
+            {/* <Route path="/adminlogin" element={<AdminLogin />} /> */}
+            {/* <Route path="/adminsignup" element={<AdminSignup />} /> */}
+           
           </Routes>
         </BrowserRouter>
-      </AuthProvider>
+      {/* </AuthProvider> */}
     </>
   );
 };
+
 
 export default App;

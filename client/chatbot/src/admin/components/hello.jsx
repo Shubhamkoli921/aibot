@@ -1,9 +1,9 @@
 import React from 'react'
+import AuthService from '../authentication/authservice'
+import { Outlet } from 'react-router-dom'
 
 const Hello = () => {
-  return (
-    <div>hello boy u looged in</div>
-  )
+  AuthService.isAuthenticated ? <div>hello broooo</div> : <div>nooo brooo</div>
 }
 
 export default Hello
