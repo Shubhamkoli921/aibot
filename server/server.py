@@ -7,6 +7,7 @@ from pymongo import MongoClient
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime
 from flask_pymongo import PyMongo
+from bson import ObjectId
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 
@@ -18,8 +19,8 @@ app.config['JWT_SECRET_KEY'] = '1F76961362D832146966AEEFE7C8CEB06BE3A9BEFD40B270
 # mongo = PyMongo(app)
 bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
-app.secret_key = secrets.token_hex(16)
-app.secret_key = os.environ.get('FLASK_SECRET_KEY', secrets.token_hex(16))
+app.secret_key = 't4Wm8Y0ypwYLzcwhDmEqJg'
+
 
 # Replace the connection string with your MongoDB Atlas connection string
 atlas_connection_string = os.getenv("MONGO_URI")
@@ -31,7 +32,7 @@ db = client['chatbot']
 information = db.superadmin
 admin_info = db.admin
 profile_info = db.profile_info
-usersinfo = db.users
+adminusersinfo = db.users
 
 # Check if data exists before inserting
 # if information.count_documents({}) == 0:
@@ -140,52 +141,83 @@ def register():
     return jsonify({'message': 'User registered successfully!'})
 
 
-@app.route('/api/users', methods=['GET'])
-def get_users():
-    users = usersinfo.find()
-    result = []
-    for user in users:
-        result.append({'_id': str(user['_id']), 'username': user['username'], 'email': user['email'], 'businessname': user['businessname']})
-    return jsonify(result)
 
-@app.route('/api/users', methods=['POST'])
-def add_user():
-    user_data = request.get_json()
-    user_data['password'] = bcrypt.generate_password_hash(user_data['password']).decode('utf-8')
-    usersinfo.insert_one(user_data)
-    return jsonify({'message': 'User added successfully'})
+@app.route('/admins', methods=['GET', 'POST'])
+def admins():
+    if request.method == 'POST':
+        data = request.json
+        
+        existing_admin = adminusersinfo.find_one({'name': data['name']})
+        if existing_admin:
+            return jsonify({'error': 'Username already exists'}), 400
 
-@app.route('/api/users/<id>', methods=['PUT'])
-def update_user(id):
-    user_data = request.get_json()
-    updated_data = {
-        'username': user_data.get('username', ''),
-        'email': user_data.get('email', '')
-    }
-    if 'password' in user_data:
-        updated_data['password'] = bcrypt.generate_password_hash(user_data['password']).decode('utf-8')
+        hashed_password = generate_password_hash(data['password'])
+        new_admin = {
+            'name': data['name'],
+            'business_name': data['business_name'],
+            'logo': data['logo'],
+            'email': data['email'],
+            'phone': data['phone'],
+            'city': data['city'],
+            'pincode': data['pincode'],
+            'password': hashed_password,
+            'enabled': True
+        }
+        adminusersinfo.insert_one(new_admin)
+        return jsonify({'message': 'Admin added successfully'}), 201
 
-    usersinfo.update_one({'_id': id}, {'$set': updated_data})
-    return jsonify({'message': 'User updated successfully'})
+    elif request.method == 'GET':
+        admins = adminusersinfo.find()
+        admins_list = []
+        for admin in admins:
+            admin['_id'] = str(admin['_id'])  # Convert ObjectId to str
+            admins_list.append(admin)
+        return jsonify({'admins': admins_list}), 200
 
-@app.route('/api/users/<id>', methods=['DELETE'])
-def delete_user(id):
-    usersinfo.delete_one({'_id': id})
-    return jsonify({'message': 'User deleted successfully'})
+@app.route('/admins/<admin_id>', methods=['GET', 'PUT', 'DELETE'])
+def admin(admin_id):
+    admin = adminusersinfo.find_one({'_id': ObjectId(admin_id)})
 
-@app.route('/api/login', methods=['POST'])
+    if not admin:
+        return jsonify({'error': 'Admin not found'}), 404
+
+    admin['_id'] = str(admin['_id'])  # Convert ObjectId to str
+
+    if request.method == 'GET':
+        return jsonify({'admin': admin}), 200
+
+    elif request.method == 'PUT':
+        data = request.json
+        hashed_password = generate_password_hash(data['password'])
+        updated_admin = {
+            'name': data['name'],
+            'business_name': data['business_name'],
+            'logo': data['logo'],
+            'email': data['email'],
+            'phone': data['phone'],
+            'city': data['city'],
+            'pincode': data['pincode'],
+            'password': hashed_password,
+            # 'enabled': data['enabled']
+        }
+        adminusersinfo.update_one({'_id': ObjectId(admin_id)}, {'$set': updated_admin})
+        return jsonify({'message': 'Admin updated successfully'}), 200
+
+    elif request.method == 'DELETE':
+        adminusersinfo.delete_one({'_id': ObjectId(admin_id)})
+        return jsonify({'message': 'Admin deleted successfully'}), 200
+
+@app.route('/login', methods=['POST'])
 def login():
-    login_data = request.get_json()
-    username = login_data['username']
-    password = login_data['password']
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
 
-    user = usersinfo.find_one({'username': username})
-    if user and bcrypt.check_password_hash(user['password'], password):
-        session['user_id'] = str(user['_id'])
-        return jsonify({'message': 'Login successful', 'user': {'_id': str(user['_id']), 'username': user['username'], 'email': user['email']}})
+    admin = adminusersinfo.find_one({'name': username})
+    if admin and check_password_hash(admin['password'], password):
+        return jsonify({'message': 'Login successful'}), 200
     else:
-        return jsonify({'message': 'Invalid username or password'})
-
+        return jsonify({'error': 'Invalid credentials'}), 401
 # @app.route('/admin/profile', methods=['POST'])
 # def update_user_stats(Name,Business_Name,Email,Phone,City,PinCode,Password,Confirm_Password,):
 #     # Create a document to insert into the collection

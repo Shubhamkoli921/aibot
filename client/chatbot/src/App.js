@@ -8,6 +8,8 @@ import Dashboard from "./superadmin/components/dashboard";
 import Login from "./superadmin/routes/superadmin/login";
 import AdminLogin from "./admin/routes/adminlogin";
 import AdminSignup from "./admin/routes/adminsignup";
+import UserManagement from "./superadmin/pages/timepass";
+import AdminList from "./superadmin/pages/timepass";
 // import Hello from "./admin/components/hello";
 // import PrivateRoute from "./privateroutes/privateroutes";
 // import PrivateRoute from "./privateroutes/privateroutes";
@@ -32,7 +34,7 @@ const App = () => {
             <Route path="/dashboard" element={<Dashboard />} />
 
             <Route path="/superlogin" element={<Login />} />
-            {/* <Route path="/adminlogin" element={<AdminLogin />} /> */}
+            <Route path="/test" element={<AdminList />} />
             {/* <Route path="/adminsignup" element={<AdminSignup />} /> */}
            
           </Routes>
