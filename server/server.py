@@ -86,18 +86,10 @@ def super_admin_login():
     #     return jsonify({'success': False, 'message': 'Login failed by server'})
 
 
-<<<<<<< HEAD
-@app.route('/')
-def index():
-    # for _ in admin.find():
-    #     return json.dumps(i, indent=4, default=json_util.default)
-    return render_template('index.html')
-=======
 # @app.route('/')
 # def index():
 #     return render_template('index.html')
 
->>>>>>> 701f58cbf7eb89edd4f97e298523070e793ce799
 
 
 @app.route('/admin/signup', methods=['POST'])
