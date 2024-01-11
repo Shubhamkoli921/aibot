@@ -416,7 +416,7 @@ export default User;
               <th className=" p-2">Pincode</th>
               <th className="p-2">Edit/Action</th>
               <th className="p-2">Action</th>
-            </tr>
+            </tr>git 
           </thead>
           <tbody>
             {data.map((user) => (
