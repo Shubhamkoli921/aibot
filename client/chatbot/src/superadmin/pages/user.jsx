@@ -1,39 +1,123 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { IoPersonAddSharp } from "react-icons/io5";
 import { MdEdit } from "react-icons/md";
 import '../css/style.css'
 // import { IoPersonAddSharp } from "react-icons/tb";
 
 const User = () => {
-  const data = [
-    {
-      logo: 1,
-      name: "John Doe",
-      businessName: "Trading",
-      email: "shubhamkk922@gmail.com",
-      phone: 9890845263,
-      city: "pune",
-      pincode: 411039,
-    },
-    {
-      logo: 2,
-      name: "shubham Doe",
-      businessName: "Information Technology",
-      email: "shubhamkk922@gmail.com",
-      phone: 9890845263,
-      city: "pune",
-      pincode: 411039,
-    },
-    {
-      logo: 3,
-      name: "aditya Doe",
-      businessName: "Interior",
-      email: "shubhamkk922@gmail.com",
-      phone: 9890845263,
-      city: "pune",
-      pincode: 411039,
-    },
-  ];
+
+  const [content, setContent] = useState('ShowUser')
+
+  const handleOnclick = (section) => {
+    setContent(section === content ? 'AddUsers' : section);
+  }
+
+  const [admins, setAdmins] = useState([]);
+  const [formData, setFormData] = useState({
+    name: '',
+    business_name: '',
+    logo: '',
+    email: '',
+    phone: '',
+    city: '',
+    pincode: '',
+    password: '',
+    enabled: true,
+  });
+  const [updatingAdminId, setUpdatingAdminId] = useState(null);
+  useEffect(() => {
+    fetch('http://localhost:5000/admins')
+      .then((response) => response.json())
+      .then((data) => setAdmins(data.admins))
+      .catch((error) => console.error('Error fetching admins:', error));
+
+  }, []); // Empty dependency array, so it runs only once
+  const handleInputChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+  const handleAddAdmin = () => {
+    fetch('http://localhost:5000/admins', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData),
+    })
+      .then((response) => response.json())
+      .then(() => {
+        // After adding, fetch the updated list of admins
+        fetch('http://localhost:5000/admins')
+          .then((response) => response.json())
+          .then((data) => setAdmins(data.admins))
+          .catch((error) => console.error('Error fetching admins:', error));
+      })
+      .catch((error) => console.error('Error adding admin:', error));
+  };
+  const handleDeleteAdmin = (adminId) => {
+    fetch(`http://localhost:5000/admins/${adminId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData),
+    })
+      .then(() => {
+        // After deleting, fetch the updated list of admins
+        fetch('http://localhost:5000/admins')
+          .then((response) => response.json())
+          .then((data) => setAdmins(data.admins))
+          .catch((error) => console.error('Error fetching admins:', error));
+      })
+      .catch((error) => console.error('Error deleting admin:', error));
+  };
+  const handleUpdateAdmin = (adminId) => {
+    // Fetch the details of the admin to be updated
+    fetch(`http://localhost:5000/admins/${adminId}`)
+      .then((response) => {
+
+        response.json()
+        console.log("showing response>>>>>", response);
+      })
+      //   console.log("");
+      .then((data) => {
+        setFormData(data);
+        setUpdatingAdminId(data.adminId);
+        console.log("show me data>>>>", data)
+      })
+      .catch((error) => console.error('Error fetching admin details:', error));
+  };
+  const handleSaveUpdate = () => {
+    // Update the admin details
+    fetch(`http://localhost:5000/admins/${updatingAdminId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData),
+    })
+      .then(() => {
+        // After updating, fetch the updated list of admins
+        fetch('http://localhost:5000/admins')
+          .then((response) => response.json())
+          .then((data) => setAdmins(data.admins))
+          .catch((error) => console.error('Error fetching admins:', error));
+        setFormData({
+          name: '',
+          business_name: '',
+          logo: '',
+          email: '',
+          phone: '',
+          city: '',
+          pincode: '',
+          password: '',
+          enabled: true,
+        });
+        setUpdatingAdminId(null);
+      })
+      .catch((error) => console.error('Error updating admin:', error));
+
+
+  };
 
   return (
     <div className="w-full h-full">
@@ -49,13 +133,7 @@ const User = () => {
                 <span className="text-right font-bold text-xl">281</span>
               </div>
             </div>
-            <hr className="mb-2 flex w-[150px] justify-center m-auto" />
-            <div>
-              <h1 className="text-green-500 font-bold">
-                +55%{" "}
-                <span className=" font-normal text-gray-500">than last week</span>
-              </h1>
-            </div>
+
           </div>
           <div className=" flex flex-col p-2 m-2 w-[215px]  bg-white  shadow h-full rounded-2xl">
             <div className="flex p-4 justify-between">
@@ -67,13 +145,7 @@ const User = () => {
                 <span className="text-right font-bold text-xl">281</span>
               </div>
             </div>
-            <hr className="mb-2 flex w-[150px] justify-center m-auto" />
-            <div>
-              <h1 className="text-green-500 font-bold">
-                +55%{" "}
-                <span className=" font-normal text-gray-500">than last week</span>
-              </h1>
-            </div>
+
           </div>
           <div className=" flex flex-col p-2 m-2 w-[215px]  bg-white shadow h-full rounded-2xl">
             <div className="flex p-4 justify-between">
@@ -85,17 +157,119 @@ const User = () => {
                 <span className="text-right font-bold text-xl">281</span>
               </div>
             </div>
-            <hr className="mb-2 flex w-[150px] justify-center m-auto" />
-            <div>
-              <h1 className="text-green-500 font-bold">
-                +55%{" "}
-                <span className=" font-normal text-gray-500">than last week</span>
-              </h1>
-            </div>
+
           </div>
         </div>
         <div>
-            
+          <div className="flex w-full justify-end gap-4 scale-90 ">
+
+            <li className="text-xl list-none cursor-pointer uppercase p-3 bg-blue-500 text-white rounded-xl font-semibold" onClick={() => handleOnclick('ShowUser')} value="ShowUser">Show users</li>
+            <li className="text-xl list-none cursor-pointer uppercase p-3 bg-blue-500 text-white rounded-xl font-semibold" onClick={() => handleOnclick('AddUsers')} value="AddUsers">Add users</li>
+
+          </div>
+          {content === 'ShowUser' &&
+            <div className="container mx-auto p-4 flex justify-center ">
+              <h2 className="text-2xl font-semibold absolute w-[900px]  shadow-md shadow-blue-300  bg-blue-500 p-4 text-white rounded-xl">User Information Table</h2>
+              <table className="flex flex-col rounded-xl w-full bg-white p-4 mt-10   ">
+                <thead className="mt-5">
+                  <tr className="grid grid-cols-9 text-sm text-gray-600">
+                    <th className=" p-2 col-span-1">Logo</th>
+                    <th className=" p-2">Owner Name</th>
+                    <th className=" p-2">Business Name</th>
+                    <th className=" p-2 col-span-2  ">Email</th>
+                    <th className=" p-2">Phone</th>
+                    <th className=" p-2">City</th>
+                    <th className=" p-2">Pincode</th>
+                    <th className="p-2">Action</th>
+                    {/* <th className="p-2">Action</th> */}
+                  </tr>
+                </thead>
+                <tbody>
+                  {admins.map((user) => (
+                    <tr
+                      key={user.id}
+                      className="hover:bg-gray-100 grid grid-cols-9 w-full text-xs "
+                    >
+                      <td className="p-2 text-center">{user.logo}</td>
+                      <td className="p-2 text-center">{user.name}</td>
+                      <td className="p-2 text-center">{user.business_name}</td>
+                      <td className="p-2 text-center col-span-2  ">{user.email}</td>
+                      <td className="p-2 text-center">{user.phone}</td>
+                      <td className="p-2 text-center">{user.city}</td>
+                      <td className="p-2 text-center">{user.pincode}</td>
+                      <td className="p-2 flex justify-center text-center">
+                        {/* <MdEdit size={18} className="cursor-pointer" /> */}
+                        <label class="switch">
+                          <input type="checkbox" />
+                          <div class="slider"></div>
+                          <div class="slider-card">
+                            <div class="slider-card-face slider-card-front"></div>
+                            <div class="slider-card-face slider-card-back"></div>
+                          </div>
+                        </label>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>}
+          {content === 'AddUsers' &&
+            <div>
+              <h2 className="text-2xl font-semibold m-auto mt-4  w-[95%] relative  shadow-md shadow-blue-300  bg-blue-500 p-4 text-white rounded-xl">Add User Table</h2>
+              <form className="grid grid-cols-3 bg-white p-4 -mt-3 rounded-xl ">
+                <input type="text"
+                  placeholder="User Name"
+                  className=" border-none  items-center p-2 m-2 rounded-lg bg-gray-200 "
+                  value=''
+                  onChange={handleInputChange}
+                />
+                <input type="text"
+                  placeholder="Business Name"
+                  className=" border-none  items-center p-2 m-2 rounded-lg bg-gray-200 "
+                  value=''
+                  onChange={handleInputChange}
+                />
+                <input type="email"
+                  placeholder="Email"
+                  className=" border-none  items-center p-2 m-2 rounded-lg bg-gray-200 "
+                  value={formData.email}
+                  onChange={handleInputChange}
+                />
+                <input type="text"
+                  placeholder="Phone No"
+                  className=" border-none  items-center p-2 m-2 rounded-lg bg-gray-200 "
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                />
+                <input type="text"
+                  placeholder="City"
+                  className=" border-none  items-center p-2 m-2 rounded-lg bg-gray-200 "
+                  value={formData.city}
+                  onChange={handleInputChange}
+                />
+                <input type="text"
+                  placeholder="Pincode"
+                  className=" border-none  items-center p-2 m-2 rounded-lg bg-gray-200 "
+                  value={formData.pincode}
+                  onChange={handleInputChange}
+                />
+
+              </form>
+              <div className="flex justify-center w-full">
+
+                {updatingAdminId ? (
+                  <button type="button" onClick={handleSaveUpdate}>
+                    Save Update
+                  </button>
+                ) : (
+                  <button type="button" onClick={handleAddAdmin}>
+                    Add Admin
+                  </button>
+                )}
+              </div>
+
+            </div>
+          }
         </div>
       </div>
     </div>

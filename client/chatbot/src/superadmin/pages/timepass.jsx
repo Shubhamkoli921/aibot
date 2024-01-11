@@ -128,7 +128,7 @@ const AdminList = () => {
         {/* Include input fields for other admin properties as well */}
         <label>
           Name:
-          <input type="text" name="name" value={formData.names} onChange={handleInputChange} />
+          <input type="text" name="name" value={formData.name} onChange={handleInputChange} />
         </label>
         <label>
           business_name:
