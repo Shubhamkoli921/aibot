@@ -7,7 +7,7 @@ import { IoMdSettings  } from "react-icons/io";
 const Profiles = () => {
   return (
     <>
-        <div className='w-full h-full'>
+        <div className='w-full h-full overflow-auto'>
             <div className='h-[180px] p-2 flex object-contain justify-center'>
                 <img className='w-full h-full object-cover rounded-md' src={pbackground} alt="" />
             </div>
