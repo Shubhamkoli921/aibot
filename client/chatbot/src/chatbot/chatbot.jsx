@@ -72,16 +72,16 @@ function App() {
                             <div className='recommendations mb-2'>
                                 <ul className='grid grid-cols-2 gap-2 '>
                                     {recommendations.map((recommendation, index) => (
-                                        <li key={index} className='flex rounded-lg p-4 justify-center bg-gray-300  cursor-pointer font-semibold' onClick={() => handleRecommendationClick(recommendation)}>
+                                        <li key={index} className='flex rounded-lg p-4 justify-center hover:bg-gray-800 border bg-gray-700  cursor-pointer font-semibold' onClick={() => handleRecommendationClick(recommendation)}>
                                             {recommendation}
                                         </li>
                                     ))}
                                 </ul>
                             </div>
                         )}
-                        <div className='flex gap-2'>
-                            <input placeholder='Enter a Prompt' type="text" className='w-full border-none text-black p-4 rounded' value={inputValue} onChange={handleUserMessageChange} />
-                            <button className='p-4 bg-blue-500 text-white rounded' type="submit">Submit</button>
+                        <div className='flex gap-2 mt-4'>
+                            <input placeholder='Enter a Prompt' type="text" className='w-full border text-white bg-gray-800 p-4 rounded' value={inputValue} onChange={handleUserMessageChange} />
+                            <button className='p-4 bg-blue-500 text-white rounded border' type="submit">Submit</button>
                         </div>
                     </form>
                 </div>

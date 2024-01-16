@@ -2,8 +2,9 @@
 
 /* Ensure the container has a maximum height and set overflow to auto */
 .overflow-container {
-    max-height: 800px; /* Set your desired maximum height */
-    overflow-y: auto;
+    /* max-height: 800px;  */
+    /* overflow-y: auto; */
+    overflow: auto;
   }
   
   /* Hide the scrollbar by default */
