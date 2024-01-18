@@ -12,19 +12,19 @@ from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 import pandas as pd
 from io import StringIO
-import openai
+import openai       
 
 
 app = Flask(__name__)
-CORS(app)
+    CORS(app)
 # app.config["MONGO_UR"] = os.getenv("MONGO_URI")
 app.config['JWT_SECRET_KEY'] = '1F76961362D832146966AEEFE7C8CEB06BE3A9BEFD40B2707FBCEC32E436BB44'
 # mongo = PyMongo(app)
 bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
-app.secret_key = 't4Wm8Y0ypwYLzcwhDmEqJg'
+app.secret_key = 't4Wm8Y0ypwYLzcwhDmEqJg'   
 
-openai.api_key = "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"
+openai.api_key = "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"
 
 # Sample CSV data (replace this with the actual CSV data from MongoDB)
 csv_data = """

@@ -7,7 +7,7 @@ import Profile from "../pages/profile";
 import DashboardCom from "../pages/dashboardcom";
 
 const AdminDashBoard = () => {
-  const [content, setContent] = useState('data');
+  const [content, setContent] = useState('dash');
 
   const handleClick = (section) => {
     setContent(section === content ? null : section);
