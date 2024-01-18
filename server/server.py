@@ -10,16 +10,32 @@ from flask_pymongo import PyMongo
 from bson import ObjectId
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+import pandas as pd
+from io import StringIO
+import openai       
 
 
 app = Flask(__name__)
-CORS(app)
+    CORS(app)
 # app.config["MONGO_UR"] = os.getenv("MONGO_URI")
 app.config['JWT_SECRET_KEY'] = '1F76961362D832146966AEEFE7C8CEB06BE3A9BEFD40B2707FBCEC32E436BB44'
 # mongo = PyMongo(app)
 bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
-app.secret_key = 't4Wm8Y0ypwYLzcwhDmEqJg'
+app.secret_key = 't4Wm8Y0ypwYLzcwhDmEqJg'   
+
+openai.api_key = "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"
+
+# Sample CSV data (replace this with the actual CSV data from MongoDB)
+csv_data = """
+ProductName, Price, Description
+python, 1000, Powerful laptop with high-speed processor
+Smartphone, 500, Feature-rich smartphone with a great camera
+Headphones, 100, Noise-canceling headphones for immersive audio
+"""
+
+# Load the CSV data into a Pandas DataFrame
+csv_df = pd.read_csv(StringIO(csv_data))
 
 
 # Replace the connection string with your MongoDB Atlas connection string
@@ -42,6 +58,22 @@ adminusersinfo = db.users
 #         # {'username': 'admin1', 'password': 'admin1password', 'role': 'admin'},
 #     ]
 #     information.insert_many(users)
+
+@app.route('/chat', methods=['POST'])
+def chat():
+    data = request.json
+    user_message = data['user_message']
+
+    # Make a request to the OpenAI API
+    response = openai.Completion.create(
+        engine="gpt-3.5-turbo-instruct",  # You can experiment with different engines
+        prompt=user_message,
+        max_tokens=150  # You can adjust the maximum number of tokens in the response
+    )
+
+    chat_response = response['choices'][0]['text'].strip()
+    
+    return jsonify({'chat_response': chat_response})
 
 
 @app.route('/superadmin/signup', methods=['POST'])
@@ -94,6 +126,8 @@ def super_admin_login():
 # @app.route('/')
 # def index():
 #     return render_template('index.html')
+
+
 
 
 

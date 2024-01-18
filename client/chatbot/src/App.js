@@ -10,6 +10,9 @@ import AdminLogin from "./admin/routes/adminlogin";
 import AdminSignup from "./admin/routes/adminsignup";
 import UserManagement from "./superadmin/pages/timepass";
 import AdminList from "./superadmin/pages/timepass";
+import AdminDashBoard from "./admin/components/dashboard";
+import Chat from "./chatbot/chatbot";
+import Chatbot from "./chatbot/chatbot";
 // import Hello from "./admin/components/hello";
 // import PrivateRoute from "./privateroutes/privateroutes";
 // import PrivateRoute from "./privateroutes/privateroutes";
@@ -31,10 +34,12 @@ const App = () => {
         <BrowserRouter>
           <Routes>
 
-            <Route path="/dashboard" element={<Dashboard />} />
-
+            <Route path="/sup/dashboard" element={<Dashboard />} />
+            <Route path="/adm/dashboard" element ={<AdminDashBoard />}/>
             <Route path="/superlogin" element={<Login />} />
             <Route path="/test" element={<AdminList />} />
+            <Route path="/chat" element={<Chatbot />} />
+
             {/* <Route path="/adminsignup" element={<AdminSignup />} /> */}
            
           </Routes>
