@@ -16,7 +16,7 @@ import openai
 
 
 app = Flask(__name__)
-    CORS(app)
+CORS(app)
 # app.config["MONGO_UR"] = os.getenv("MONGO_URI")
 app.config['JWT_SECRET_KEY'] = '1F76961362D832146966AEEFE7C8CEB06BE3A9BEFD40B2707FBCEC32E436BB44'
 # mongo = PyMongo(app)
