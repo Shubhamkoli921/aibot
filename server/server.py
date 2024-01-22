@@ -50,6 +50,7 @@ information = db.superadmin
 admin_info = db.admin
 profile_info = db.profile_info
 adminusersinfo = db.users
+productdetail = db.bproducts
 
 # Check if data exists before inserting
 # if information.count_documents({}) == 0:
@@ -253,6 +254,64 @@ def login():
         return jsonify({'message': 'Login successful'}), 200
     else:
         return jsonify({'error': 'Invalid credentials'}), 401
+
+
+
+def get_next_product_id():
+    max_id = productdetail.find_one(sort=[("id", -1)])
+    return max_id['id'] + 1 if max_id else 1
+
+@app.route('/products', methods=['GET'])
+def get_products():
+    products = list(productdetail.find({}, {'_id': 0}))
+    return jsonify(products)
+
+@app.route('/products', methods=['POST'])
+def add_product():
+    new_product = request.json
+    new_product['id'] = get_next_product_id()
+    
+    # Check for duplicate product name
+    if productdetail.find_one({'productName': new_product['productName']}):
+        return jsonify({"error": "Product with the same name already exists"}), 400
+
+    productdetail.insert_one(new_product)
+    return jsonify({"message": "Product added successfully"}), 201
+
+@app.route('/products/<int:product_id>', methods=['PUT'])
+def update_product(product_id):
+    updated_product = request.json
+
+    # Check if the product with the given ID exists
+    existing_product = productdetail.find_one({"id": product_id})
+    if not existing_product:
+        return jsonify({"error": "Product not found"}), 404
+
+    # Check for duplicate product name
+    if (existing_product['productName'] != updated_product['productName'] and
+            productdetail.find_one({'productName': updated_product['productName']})):
+        return jsonify({"error": "Product with the same name already exists"}), 400
+
+    productdetail.update_one({"id": product_id}, {"$set": updated_product})
+    return jsonify({"message": "Product updated successfully"})
+
+@app.route('/products/<int:product_id>', methods=['DELETE'])
+def delete_product(product_id):
+    # Check if the product with the given ID exists
+    existing_product = productdetail.find_one({"id": product_id})
+    if not existing_product:
+        return jsonify({"error": "Product not found"}), 404
+
+    productdetail.delete_one({"id": product_id})
+    return jsonify({"message": "Product deleted successfully"})
+
+
+@app.route("/products/bulk", methods=["POST"])
+def add_bulk_products():
+    new_products = request.json
+    productdetail.insert_many(new_products)
+    return jsonify({"message": "Bulk products added successfully"}), 201
+
 # @app.route('/admin/profile', methods=['POST'])
 # def update_user_stats(Name,Business_Name,Email,Phone,City,PinCode,Password,Confirm_Password,):
 #     # Create a document to insert into the collection
