@@ -3,10 +3,13 @@ import * as XLSX from "xlsx";
 import axios from "axios";
 import Modal from "react-modal";
 import { IoClose } from "react-icons/io5";
+import ReactPaginate from "react-paginate";
 
 const ProductTable = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [pageNumber, setPageNumber] = useState(0);
+  const productsPerPage = 5;
 
   const openModal = () => {
     setIsModalOpen(true)
@@ -26,6 +29,99 @@ const ProductTable = () => {
   const [products, setProducts] = useState(initialProducts);
   const [editedProduct, setEditedProduct] = useState(null);
   const [newProduct, setNewProduct] = useState({ productName: "", price: 0, description: "" });
+
+  const pagesVisited = pageNumber * productsPerPage;
+
+  const displayProducts = products
+    .slice(pagesVisited, pagesVisited + productsPerPage)
+    .map((product) => (
+      <tr key={product.id}>
+        <td className="border px-4 py-2">{product.id}</td>
+        <td className="border px-4 py-2">
+          {editedProduct && editedProduct.id === product.id ? (
+            <input
+              type="text"
+              value={editedProduct.productName}
+              onChange={(e) =>
+                setEditedProduct((prevProduct) => ({
+                  ...prevProduct,
+                  productName: e.target.value,
+                }))
+              }
+              className="w-full border rounded py-1 px-2"
+            />
+          ) : (
+            product.productName
+          )}
+        </td>
+        <td className="border px-4 py-2">
+          {editedProduct && editedProduct.id === product.id ? (
+            <input
+              type="number"
+              value={editedProduct.price}
+              onChange={(e) =>
+                setEditedProduct((prevProduct) => ({
+                  ...prevProduct,
+                  price: e.target.value,
+                }))
+              }
+              className="w-full border rounded py-1 px-2"
+            />
+          ) : (
+            `$${parseFloat(product.price).toFixed(2)}`
+          )}
+        </td>
+        <td className="border px-4 py-2">
+          {editedProduct && editedProduct.id === product.id ? (
+            <input
+              type="text"
+              value={editedProduct.description}
+              onChange={(e) =>
+                setEditedProduct((prevProduct) => ({
+                  ...prevProduct,
+                  description: e.target.value,
+                }))
+              }
+              className="w-full border rounded py-1 px-2"
+            />
+          ) : (
+            product.description
+          )}
+        </td>
+        <td className="border px-4 py-2">
+          {editedProduct && editedProduct.id === product.id ? (
+            <button
+              onClick={() => handleUpdate(product.id, editedProduct)}
+              className="bg-blue-500 text-white px-2 py-1 rounded"
+            >
+              Save
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={() => handleEdit(product.id)}
+                className="bg-yellow-500 text-white px-2 py-1 rounded mr-2"
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => handleDelete(product.id)}
+                className="bg-red-500 text-white px-2 py-1 rounded"
+              >
+                Delete
+              </button>
+            </>
+          )}
+        </td>
+      </tr>
+    ));
+
+  const pageCount = Math.ceil(products.length / productsPerPage);
+
+  const changePage = ({ selected }) => {
+    setPageNumber(selected);
+  };
+
 
   useEffect(() => {
     // Fetch products from Flask API on component mount
@@ -118,6 +214,15 @@ const ProductTable = () => {
     <div className="container flex mx-auto mt-8">
       <div className="max-w-2xl mx-auto">
         <h2 className="text-3xl mb-4">Product Table</h2>
+        <div className="mt-8 flex w-full justify-between">
+          <div className="cursor-pointer text-xl" onClick={openModal}>
+            Openmodal
+          </div>
+          <div>
+            <h2 className="text-xl mb-4">Upload Products</h2>
+            <input type="file" accept=".csv, .xlsx" onChange={handleFileUpload} className="mb-4" />
+          </div>
+        </div>
         <table className="w-full table-auto">
           <thead>
             <tr>
@@ -128,90 +233,21 @@ const ProductTable = () => {
               <th className="border">Actions</th>
             </tr>
           </thead>
-          <tbody>
-            {products.map((product) => (
-              <tr key={product.id}>
-                <td className="border px-4 py-2">{product.id}</td>
-                <td className="border px-4 py-2">
-                  {editedProduct && editedProduct.id === product.id ? (
-                    <input
-                      type="text"
-                      value={editedProduct.productName}
-                      onChange={(e) =>
-                        setEditedProduct((prevProduct) => ({
-                          ...prevProduct,
-                          productName: e.target.value,
-                        }))
-                      }
-                      className="w-full border rounded py-1 px-2"
-                    />
-                  ) : (
-                    product.productName
-                  )}
-                </td>
-                <td className="border px-4 py-2">
-                  {editedProduct && editedProduct.id === product.id ? (
-                    <input
-                      type="number"
-                      value={editedProduct.price}
-                      onChange={(e) =>
-                        setEditedProduct((prevProduct) => ({
-                          ...prevProduct,
-                          price: e.target.value,
-                        }))
-                      }
-                      className="w-full border rounded py-1 px-2"
-                    />
-                  ) : (
-                    `$${parseFloat(product.price).toFixed(2)}`
-                  )}
-                </td>
-                <td className="border px-4 py-2">
-                  {editedProduct && editedProduct.id === product.id ? (
-                    <input
-                      type="text"
-                      value={editedProduct.description}
-                      onChange={(e) =>
-                        setEditedProduct((prevProduct) => ({
-                          ...prevProduct,
-                          description: e.target.value,
-                        }))
-                      }
-                      className="w-full border rounded py-1 px-2"
-                    />
-                  ) : (
-                    product.description
-                  )}
-                </td>
-                <td className="border px-4 py-2">
-                  {editedProduct && editedProduct.id === product.id ? (
-                    <button
-                      onClick={() => handleUpdate(product.id, editedProduct)}
-                      className="bg-blue-500 text-white px-2 py-1 rounded"
-                    >
-                      Save
-                    </button>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => handleEdit(product.id)}
-                        className="bg-yellow-500 text-white px-2 py-1 rounded mr-2"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(product.id)}
-                        className="bg-red-500 text-white px-2 py-1 rounded"
-                      >
-                        Delete
-                      </button>
-                    </>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
+          <tbody>{displayProducts}</tbody>
         </table>
+        <div className="mt-4">
+          <ReactPaginate className="flex justify-between w-full"
+            previousLabel={"Previous"}
+            nextLabel={"Next"}
+            pageCount={pageCount}
+            onPageChange={changePage}
+            containerClassName={"pagination"}
+            previousLinkClassName={"pagination__link"}
+            nextLinkClassName={"pagination__link"}
+            disabledClassName={"pagination__link--disabled"}
+            activeClassName={"pagination__link--active"}
+          />
+        </div>
 
         <Modal
           isOpen={isModalOpen}
@@ -269,18 +305,11 @@ const ProductTable = () => {
           </div>
 
         </Modal>
-
       </div>
-      <div className="mt-8">
 
-        <div>
-          <div className="cursor-pointer" onClick={openModal}>Openmodal</div>
-        </div>
-        <div>
-          <h2 className="text-3xl mb-4">Upload Products</h2>
-          <input type="file" accept=".csv, .xlsx" onChange={handleFileUpload} className="mb-4" />
-        </div>
-      </div>
+
+
+
     </div>
   );
 };
