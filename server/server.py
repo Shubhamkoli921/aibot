@@ -1,5 +1,6 @@
 import os
 import secrets
+import calendar
 from flask import Flask, jsonify, request, render_template, session
 from flask_cors import CORS
 from flask_jwt_extended import create_access_token, JWTManager
@@ -8,12 +9,19 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime
 from flask_pymongo import PyMongo
 from bson import ObjectId
+from bson import json_util
+from collections import defaultdict
+
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 import pandas as pd
+from pymongo.errors import DuplicateKeyError 
 from io import StringIO
-import openai       
+import datetime as dt
+from collections import Counter
 
+import openai       
+# import re
 
 app = Flask(__name__)
 CORS(app)
@@ -24,7 +32,7 @@ bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
 app.secret_key = 't4Wm8Y0ypwYLzcwhDmEqJg'   
 
-openai.api_key = "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"
+openai.api_key = "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"
 
 # Sample CSV data (replace this with the actual CSV data from MongoDB)
 csv_data = """
@@ -51,7 +59,8 @@ admin_info = db.admin
 profile_info = db.profile_info
 adminusersinfo = db.users
 productdetail = db.bproducts
-
+# users_collection = db.users
+historyofchats = db.chathistory
 # Check if data exists before inserting
 # if information.count_documents({}) == 0:
 #     users = [
@@ -60,21 +69,146 @@ productdetail = db.bproducts
 #     ]
 #     information.insert_many(users)
 
+
+
 @app.route('/chat', methods=['POST'])
 def chat():
-    data = request.json
-    user_message = data['user_message']
+    try:
+        user_query = request.json.get('message', '').lower()
+        user_id = request.json.get('userId', '')
+        user_name = request.json.get('userName', '')
 
-    # Make a request to the OpenAI API
-    response = openai.Completion.create(
-        engine="gpt-3.5-turbo-instruct",  # You can experiment with different engines
-        prompt=user_message,
-        max_tokens=150  # You can adjust the maximum number of tokens in the response
-    )
+        # Store the user's chat history with user name
+        chat_history_user = {"user_id": user_id, "user_name": user_name, "role": "user", "message": user_query, "timestamp": get_current_timestamp()}
+        historyofchats.insert_one(chat_history_user)
 
-    chat_response = response['choices'][0]['text'].strip()
-    
-    return jsonify({'chat_response': chat_response})
+        # Use OpenAI's GPT-3 to generate a response
+        response = openai.Completion.create(
+            engine="gpt-3.5-turbo-instruct",
+            prompt=f"User: {user_query}\nChatbot:",
+            temperature=0.7,
+            max_tokens=150,
+        )
+        bot_response = response['choices'][0]['text']
+
+        # Store the bot's response in chat history
+        chat_history_bot = {"user_id": user_id, "user_name": user_name, "role": "bot", "message": bot_response, "timestamp": get_current_timestamp()}
+        historyofchats.insert_one(chat_history_bot)
+
+        response_data = {'message': bot_response}
+        return jsonify(response_data), 200
+
+    except Exception as e:
+        print('Error:', e)
+        response_data = {'message': 'An error occurred. Please try again later.'}
+        return jsonify(response_data), 500
+
+def get_current_timestamp():
+    return dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+@app.route('/chat/history', methods=['GET'])
+def get_chat_history():
+    try:
+        user_id = request.args.get('userId', '')
+        user_name = request.args.get('userName', '')
+
+        print(f"Debug - User ID: {user_id}, User Name: {user_name}")
+
+        # Retrieve chat history for all users
+        all_chat_history = list(historyofchats.find())
+
+        # Get total number of user and bot messages for all users
+        total_user_messages = sum(1 for chat in all_chat_history if chat['role'] == 'user')
+        total_bot_messages = sum(1 for chat in all_chat_history if chat['role'] == 'bot')
+
+        total_no_chats = total_user_messages + total_bot_messages
+
+        # Query to retrieve chat history for the specified user
+        user_chat_history = list(historyofchats.find({"user_id": user_id, "user_name": user_name}))
+
+        # Count the number of user and bot messages for each user
+        user_message_counts = Counter(chat['user_id'] for chat in all_chat_history if chat['role'] == 'user')
+        bot_message_counts = Counter(chat['user_id'] for chat in all_chat_history if chat['role'] == 'bot')
+
+        # Convert ObjectId to string for JSON serialization
+        for chat in all_chat_history:
+            chat['_id'] = str(chat['_id'])
+
+        # Sort user chat history based on timestamp
+        user_chat_history.sort(key=lambda x: x['timestamp'])
+
+        # Group user chat history by user name
+        user_chat_history_grouped = defaultdict(list)
+        for chat in user_chat_history:
+            user_chat_history_grouped[chat['user_name']].append(chat)
+
+        # Group all chat history by user name
+        all_chat_history_grouped = defaultdict(list)
+        for chat in all_chat_history:
+            all_chat_history_grouped[chat['user_name']].append(chat)
+
+        # Create the desired format for all_chathistory
+        formatted_all_chathistory = [
+            {
+                "user_name": user_name,
+                "user_id": all_chat_history_grouped[user_name][0]['user_id'],  # Assuming user_id is the same for all messages of a user
+                "data": [
+                    {
+                        "_id": chat['_id'],
+                        "role": chat['role'],
+                        "message": chat['message'],
+                        "timestamp": chat['timestamp']
+                    }
+                    for chat in all_chat_history_grouped[user_name]
+                ]
+            }
+            for user_name in all_chat_history_grouped
+        ]
+
+        # Extract day of the week from timestamp and count total chats for each day
+        daywise_chat_counts = {calendar.day_name[day]: 0 for day in range(7)}  # Use day names instead of numbers
+        for chat in all_chat_history:
+            timestamp = datetime.strptime(chat['timestamp'], '%Y-%m-%d %H:%M:%S')
+            day_of_week = timestamp.weekday()
+            day_name = calendar.day_name[day_of_week]
+            daywise_chat_counts[day_name] += 1
+
+        # Extract month from timestamp and count total chats for each month
+        monthwise_chat_counts = {calendar.month_name[month]: 0 for month in range(1, 13)}  # Use month names instead of numbers
+        for chat in all_chat_history:
+            timestamp = datetime.strptime(chat['timestamp'], '%Y-%m-%d %H:%M:%S')
+            month_name = calendar.month_name[timestamp.month]
+            monthwise_chat_counts[month_name] += 1
+
+        # Format the response data
+        chat_history = [
+            {"user_name": user_name, "user_chat_history": [{"chatData": chat} for chat in user_chat_history_grouped[user_name]]}
+        ]
+
+        response_data = {
+            'total_user_messages': total_user_messages,
+            'total_bot_messages': total_bot_messages,
+            'total_no_chats': total_no_chats,
+            'user_message_counts': dict(user_message_counts),
+            'bot_message_counts': dict(bot_message_counts),
+            'all_chathistory': formatted_all_chathistory,
+            # 'chat_history': chat_history,
+            # 'userchat_history': [{"user_name": name, "user_chat_history": history} for name, history in user_chat_history_grouped.items()],
+            'daywise_chat_counts': daywise_chat_counts,
+            'monthwise_chat_counts': monthwise_chat_counts
+        }
+
+        # Serialize the response data to JSON using json_util
+        json_response = json_util.dumps(response_data)
+
+        return json_response, 200, {'Content-Type': 'application/json'}
+
+    except Exception as e:
+        print('Error:', e)
+        response_data = {'message': 'An error occurred. Please try again later.'}
+        return jsonify(response_data), 500
+
+
 
 
 @app.route('/superadmin/signup', methods=['POST'])
@@ -228,7 +362,7 @@ def admin(admin_id):
         updated_admin = {
             'name': data['name'],
             'business_name': data['business_name'],
-            'logo': data['logo'],
+            'logo': data['logo'], 
             'email': data['email'],
             'phone': data['phone'],
             'city': data['city'],

@@ -4,6 +4,9 @@ import axios from "axios";
 import Modal from "react-modal";
 import { IoClose } from "react-icons/io5";
 import ReactPaginate from "react-paginate";
+import { MdEdit } from "react-icons/md";
+import { FcDocument, FcFullTrash } from "react-icons/fc";
+import { HiViewGridAdd } from "react-icons/hi";
 
 const ProductTable = () => {
 
@@ -35,9 +38,9 @@ const ProductTable = () => {
   const displayProducts = products
     .slice(pagesVisited, pagesVisited + productsPerPage)
     .map((product) => (
-      <tr key={product.id}>
-        <td className="border px-4 py-2">{product.id}</td>
-        <td className="border px-4 py-2">
+      <tr className="hover:bg-gray-100 grid grid-cols-9  w-full text-xs " key={product.id}>
+        <td className="p-2 text-center ">{product.id}</td>
+        <td className="p-2 text-center col-span-2">
           {editedProduct && editedProduct.id === product.id ? (
             <input
               type="text"
@@ -54,7 +57,7 @@ const ProductTable = () => {
             product.productName
           )}
         </td>
-        <td className="border px-4 py-2">
+        <td className="p-2 text-center col-span-2">
           {editedProduct && editedProduct.id === product.id ? (
             <input
               type="number"
@@ -71,7 +74,7 @@ const ProductTable = () => {
             `$${parseFloat(product.price).toFixed(2)}`
           )}
         </td>
-        <td className="border px-4 py-2">
+        <td className="p-2 text-center col-span-2">
           {editedProduct && editedProduct.id === product.id ? (
             <input
               type="text"
@@ -88,27 +91,27 @@ const ProductTable = () => {
             product.description
           )}
         </td>
-        <td className="border px-4 py-2">
+        <td className="p-2 text-center col-span-2 ">
           {editedProduct && editedProduct.id === product.id ? (
             <button
               onClick={() => handleUpdate(product.id, editedProduct)}
               className="bg-blue-500 text-white px-2 py-1 rounded"
             >
-              Save
+              <FcDocument size={20} />
             </button>
           ) : (
             <>
               <button
                 onClick={() => handleEdit(product.id)}
-                className="bg-yellow-500 text-white px-2 py-1 rounded mr-2"
+                className=" px-2 py-1 rounded mr-2"
               >
-                Edit
+                <MdEdit size={20} />
               </button>
               <button
                 onClick={() => handleDelete(product.id)}
-                className="bg-red-500 text-white px-2 py-1 rounded"
+                className=" px-2 py-1 rounded"
               >
-                Delete
+                <FcFullTrash size={20} />
               </button>
             </>
           )}
@@ -211,32 +214,37 @@ const ProductTable = () => {
   };
 
   return (
-    <div className="container flex mx-auto mt-8">
-      <div className="max-w-2xl mx-auto">
-        <h2 className="text-3xl mb-4">Product Table</h2>
-        <div className="mt-8 flex w-full justify-between">
-          <div className="cursor-pointer text-xl" onClick={openModal}>
-            Openmodal
+    <div className="container flex mx-auto">
+      <div className=" w-full scale-95 mx-auto">
+
+        <div className="mt-4 flex w-full justify-between">
+          <div className="cursor-pointer gap-4 flex items-center justify-between w-full" onClick={openModal}>
+            <div className="flex  items-center">
+              <HiViewGridAdd size={40} />
+              <h1>Add Product</h1>
+            </div>
+            <div className="flex">
+              {/* <h2 className=" mb-4">Upload Products via file</h2> */}
+              <input type="file" accept=".csv, .xlsx" onChange={handleFileUpload} />
+            </div>
           </div>
-          <div>
-            <h2 className="text-xl mb-4">Upload Products</h2>
-            <input type="file" accept=".csv, .xlsx" onChange={handleFileUpload} className="mb-4" />
-          </div>
+
         </div>
-        <table className="w-full table-auto">
-          <thead>
-            <tr>
-              <th className="border">ID</th>
-              <th className="border">Product Name</th>
-              <th className="border">Price</th>
-              <th className="border">Description</th>
-              <th className="border">Actions</th>
+        <h2 className="text-2xl justify-center items-center font-semibold absolute w-full  shadow-md shadow-blue-300  bg-blue-500 p-4 text-white rounded-xl">User Information Table</h2>
+        <table className="flex flex-col rounded-xl w-full bg-white p-4 mt-10  ">
+          <thead className="mt-5">
+            <tr className="grid grid-cols-9 text-sm text-gray-600">
+              <th className=" p-2">ID</th>
+              <th className=" p-2 col-span-2">Product Name</th>
+              <th className=" p-2 col-span-2">Price</th>
+              <th className=" p-2 col-span-2">Description</th>
+              <th className=" p-2 col-span-2">Actions</th>
             </tr>
           </thead>
           <tbody>{displayProducts}</tbody>
         </table>
-        <div className="mt-4">
-          <ReactPaginate className="flex justify-between w-full"
+        <div className="mt-4 scale-95">
+          <ReactPaginate className="flex justify-between w-full  "
             previousLabel={"Previous"}
             nextLabel={"Next"}
             pageCount={pageCount}
