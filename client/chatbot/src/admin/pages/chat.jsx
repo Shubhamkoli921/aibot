@@ -45,7 +45,7 @@ const Chat = () => {
       <h2 className="text-2xl justify-center items-center font-semibold w-full mt-10 shadow-md shadow-blue-300 bg-blue-500 p-4 text-white rounded-xl">User Chat Information Table</h2>
       {!loading && chatHistory.length > 0 ? (
         <div className='w-full'>
-          <table className="flex flex-col rounded-xl w-full bg-white p-4 relative">
+          <table className="flex flex-col rounded-xl w-full h-full bg-white p-4 relative">
             <thead className="mt-5">
               <tr className="grid grid-cols-3 text-sm text-gray-600">
                 <th className="p-2">User's ID</th>

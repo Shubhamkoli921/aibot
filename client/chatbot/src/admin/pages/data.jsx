@@ -218,12 +218,12 @@ const ProductTable = () => {
       <div className=" w-full scale-95 mx-auto">
 
         <div className="mt-4 flex w-full justify-between">
-          <div className="cursor-pointer gap-4 flex items-center justify-between w-full" onClick={openModal}>
-            <div className="flex  items-center">
+          <div className=" gap-4 flex items-center justify-between w-full" >
+            <div onClick={openModal} className=" flex cursor-pointer items-center">
               <HiViewGridAdd size={40} />
               <h1>Add Product</h1>
             </div>
-            <div className="flex">
+            <div className="flex cursor-pointer">
               {/* <h2 className=" mb-4">Upload Products via file</h2> */}
               <input type="file" accept=".csv, .xlsx" onChange={handleFileUpload} />
             </div>
@@ -231,7 +231,7 @@ const ProductTable = () => {
 
         </div>
         <h2 className="text-2xl justify-center items-center font-semibold absolute w-full  shadow-md shadow-blue-300  bg-blue-500 p-4 text-white rounded-xl">User Information Table</h2>
-        <table className="flex flex-col rounded-xl w-full bg-white p-4 mt-10  ">
+        <table className="flex flex-col rounded-xl w-full h-full bg-white p-4 mt-10  ">
           <thead className="mt-5">
             <tr className="grid grid-cols-9 text-sm text-gray-600">
               <th className=" p-2">ID</th>
