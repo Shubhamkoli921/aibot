@@ -1,53 +1,49 @@
 // src/App.js
 import React, { useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Provider } from 'react-redux'; // Import Provider from react-redux
+import store from '../src/state/store'; // Import your Redux store
 
-
-// import { AuthProvider, useAuth } from "./superadmin/authentication/authContext";
 import Dashboard from "./superadmin/components/dashboard";
 import Login from "./superadmin/routes/superadmin/login";
-import AdminLogin from "./admin/routes/adminlogin";
-import AdminSignup from "./admin/routes/adminsignup";
-import UserManagement from "./superadmin/pages/timepass";
 import AdminList from "./superadmin/pages/timepass";
 import AdminDashBoard from "./admin/components/dashboard";
-import Chat from "./chatbot/chatbot";
 import Chatbot from "./chatbot/chatbot";
-// import Hello from "./admin/components/hello";
-// import PrivateRoute from "./privateroutes/privateroutes";
-// import PrivateRoute from "./privateroutes/privateroutes";
-
+import AdminLogin from "./admin/routes/adminlogin";
 
 const App = () => {
-  // const { user } = useAuth();
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+
+  // Event handler functions to update username and password
+  const handleUsernameChange = (event) => {
+    setUsername(event.target.value);
+  };
+
+  const handlePasswordChange = (event) => {
+    setPassword(event.target.value);
+  };
+
   return (
-    // <div>
-    //   {user ? (
-    //     <Dashboard user={user} />
-    //   ) : (
-    //     <Login onLogin={handleLogin} />
-    //   )}
-    // </div>
-    <>
-      hello plz provide routes
-      {/* <AuthProvider> */}
+    <Provider store={store}> {/* Wrap your app with Provider and pass the Redux store */}
+      <>
+        hello plz provide routes
         <BrowserRouter>
           <Routes>
-
             <Route path="/sup/dashboard" element={<Dashboard />} />
-            <Route path="/adm/dashboard" element ={<AdminDashBoard />}/>
+            <Route path="/login" element={<AdminLogin username={username}
+              password={password}
+              onUsernameChange={handleUsernameChange}
+              onPasswordChange={handlePasswordChange} />} />
+            <Route path="/adm/dashboard" element={<AdminDashBoard />} />
             <Route path="/superlogin" element={<Login />} />
             <Route path="/test" element={<AdminList />} />
-            <Route path="/chat" element={<Chatbot />} />
-
-            {/* <Route path="/adminsignup" element={<AdminSignup />} /> */}
-           
+            <Route path="/chat" element={<Chatbot username={username} password={password} />} />
           </Routes>
         </BrowserRouter>
-      {/* </AuthProvider> */}
-    </>
+      </>
+    </Provider>
   );
 };
-
 
 export default App;

@@ -1,62 +1,47 @@
-import React, { useState } from "react";
+// Login.js
+
+import React, { useState } from 'react';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { connect } from 'react-redux';
+import { updateToken, updateAdminId } from '../../../state/action';
 import signibg from "../../assets/signin.jpg";
-import { useNavigate } from "react-router-dom";
-import {
-  FaInstagramSquare,
-  FaFacebookSquare,
-  FaLinkedin,
-} from "react-icons/fa";
-import axios from "axios";
-// import { useAuth } from "../../authentication/authContext";
-// import { useAuth } from "../../authentication/authContext";
+// import AdminDashBoard from '../../../admin/components/dashboard';
 
-const Login = ({ onLogin }) => {
+function Login({ updateToken, updateAdminId }) {
   const navigate = useNavigate();
-  // const { login } = useAuth();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [loginType, setLoginType] = useState('admin');
 
-  const handleLogin = async () => {
-    fetch("http://127.0.0.1:5000/superadmin/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ username, password }),
-    })
-      .then((response) => {
-        // navigate('/dashboard')
-        if (response.ok) {
-          // Successful login
-          console.log("login successfully bu frontend" , response)
-          navigate('/dashboard')
-          return response.json();
-        } else {
-          // Failed login
-          throw new Error("Login failed");
-        }
-      })
-      .then((data)=>{
-        if(data.access_token){
-          alert("login succusffully done")
-          console.log(data.access_token);
+  const handleLogin = () => {
+    const admin = { name: username, password: password };
+    const superAdmin = { username: username, password: password };
+
+    axios.post(
+      loginType === 'admin' ? 'http://localhost:5000/login' : 'http://localhost:5000/superadmin/login',
+      loginType === 'admin' ? admin : superAdmin
+    )
+      .then(response => {
+        const { access_token, adminId } = response.data;
+        updateToken(access_token);
+        updateAdminId(adminId);
+       
+        if(loginType === 'admin'){
+          navigate('/adm/dashboard', { state: { token: access_token, adminId: adminId } });
         }
         else{
-          alert("failed")
-          console.log("failed");
+          navigate('/sup/dashboard', {state: { token: access_token, adminId: adminId }})
         }
       })
-      
-
-      .catch((error) => {
-        console.error("Login failed:", error.message);
+      .catch(error => {
+        console.error(error);
+        // Handle error
       });
-
-    // const userData = { username, password };
-    // login(userData);
   };
 
   return (
+    // <div className="w-full p-2 m-auto h-screen bg-slate-100">
     <div className="w-full p-2 m-auto h-screen bg-slate-100">
       <div className="object-contain absolute w-full h-screen ">
         <img
@@ -64,23 +49,11 @@ const Login = ({ onLogin }) => {
           className="object-cover h-screen rounded-xl w-full"
           alt=""
         />
-        {/* <div>fgkjfg</div> */}
       </div>
       <div className="flex justify-center items-center w-full h-full">
         <div className="flex justify-center flex-col items-center absolute mt-10  ">
           <div className="w-[290px] bg-blue-500 h-[180px] rounded-xl shadow-md shadow-blue-300 absolute top-0 -mt-10 flex justify-center flex-col items-center">
             <h1 className="font-bold text-2xl text-white">Sign in</h1>
-            <div className="flex mt-5 w-full justify-center gap-4 items-center">
-              <FaLinkedin size={30} className="text-white cursor-pointer" />
-              <FaFacebookSquare
-                size={30}
-                className="text-white cursor-pointer"
-              />
-              <FaInstagramSquare
-                size={30}
-                className="text-white cursor-pointer"
-              />
-            </div>
           </div>
           <div className="w-[320px] bg-white h-[500px] rounded-lg flex flex-col justify-end p-4">
             <div className="w-full  h-full flex flex-col mt-40 ">
@@ -108,11 +81,28 @@ const Login = ({ onLogin }) => {
             >
               Sign in
             </button>
+            <div>
+              <p>Login Type:</p>
+              <select value={loginType} onChange={(e) => setLoginType(e.target.value)}>
+                <option value="admin">Admin</option>
+                <option value="superadmin">Super Admin</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
+      {/* {console.log("token>>>>>", token)}
+      {token && <AdminDashBoard token={token} adminId={adminId} />} */}
     </div>
+    // </div>
   );
+}
+
+const mapDispatchToProps = {
+  updateToken,
+  updateAdminId,
 };
 
-export default Login;
+export default connect(null, mapDispatchToProps)(Login);
+
+

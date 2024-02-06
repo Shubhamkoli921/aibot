@@ -1,7 +1,8 @@
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
+import { connect } from 'react-redux';
 import { ImStatsBars } from 'react-icons/im';
-import { IoPersonAddSharp } from 'react-icons/io5';
+// import { IoPersonAddSharp } from 'react-icons/io5';
 import { TbSofa } from 'react-icons/tb';
 import {
     LineChart,
@@ -13,17 +14,21 @@ import {
     Legend,
 } from "recharts";
 
-const DashboardCom = () => {
+const DashboardCom = ({ token, adminId }) => {
     const [dashDayData, setDaydashData] = useState([]);
     const [dashmonthData, setdashMonthData] = useState([])
-    const [totalUserMessage,setTotalUserMessage] = useState('')
-    const [totalChatMessage,setTotalChatMessage]=useState('')
-    const [allchatmessage,setAllchatMessage] = useState('')
+    const [totalUserMessage, setTotalUserMessage] = useState('')
+    const [totalChatMessage, setTotalChatMessage] = useState('')
+    const [allchatmessage, setAllchatMessage] = useState('')
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await axios.get("http://localhost:5000/chat/history");
+                const response = await axios.get("http://localhost:5000/chat/history", {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
                 setAllchatMessage(response.data.total_no_chats)
                 setTotalChatMessage(response.data.total_bot_messages)
                 setTotalUserMessage(response.data.total_user_messages)
@@ -31,20 +36,21 @@ const DashboardCom = () => {
                 setdashMonthData(response.data.monthwise_chat_counts)
                 console.log("day data>>", response.data.daywise_chat_counts);
                 console.log("day data>>", response.data.monthwise_chat_counts);
+              
             } catch (err) {
                 console.log("error fetching data>>>", err);
             }
         };
 
         fetchData();
-    }, []);
+    }, [token]);
 
     // Extracting data for LineChart
     const chartData = Object.keys(dashDayData).map(day => ({ name: day, chats: dashDayData[day] }));
     const MonthData = Object.keys(dashmonthData).map(day => ({ name: day, chats: dashmonthData[day] }));
 
     return (
-        <div className='w-full h-full scale-95  '>
+        <div className='w-full h-screen scale-95  '>
             <div className="flex p-2 w-full justify-end">
                 <div className=" flex flex-col p-2 m-2 w-[215px]  bg-white shadow h-full rounded-2xl">
                     <div className="flex p-4 justify-between">
@@ -100,7 +106,7 @@ const DashboardCom = () => {
                         </h1>
                     </div>
                 </div>
-                
+
             </div>
             <div className='flex justify-center gap-4'>
                 <div className='flex flex-col justify-center w-full items-center rounded-lg'>
@@ -160,4 +166,9 @@ const DashboardCom = () => {
     );
 };
 
-export default DashboardCom;
+const mapStateToProps = (state) => ({
+    token: state.token,
+    adminId: state.adminId,
+});
+
+export default connect(mapStateToProps)(DashboardCom);

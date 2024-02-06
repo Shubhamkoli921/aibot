@@ -1,12 +1,10 @@
-// Import necessary libraries and components
-
-import { useState } from "react";
+import React, { useState } from "react";
 import Data from "../pages/data";
-import Chat from "../pages/chat";
 import Profile from "../pages/profile";
 import DashboardCom from "../pages/dashboardcom";
+import Chats from "../../chatbot/chatbot";
 
-const AdminDashBoard = () => {
+const AdminDashBoard = ({ token, adminId }) => {
   const [content, setContent] = useState('dash');
 
   const handleClick = (section) => {
@@ -14,10 +12,10 @@ const AdminDashBoard = () => {
   };
 
   const navigationItems = [
-    { label:'Dashboard',id:'dash'},
+    { label: 'Dashboard', id: 'dash' },
     { label: 'Data processing', id: 'data' },
-    { label: 'Chat history', id: 'chat' },
     { label: 'Profile', id: 'profile' },
+    { label: 'Chat Data', id: 'chattext' }
   ];
 
   return (
@@ -46,10 +44,10 @@ const AdminDashBoard = () => {
           </nav>
         </div>
         <div className='w-[80%] bg-slate-100 h-full'>
-          {content=== 'dash' && <DashboardCom />}
+          {content === 'dash' && <DashboardCom />}
           {content === 'data' && <Data />}
-          {content === 'chat' && <Chat />}
           {content === 'profile' && <Profile />}
+          {content === 'chattext' && <Chats token={token} adminId={adminId} />}
           {!content && <p>Select a section</p>}
         </div>
       </div>

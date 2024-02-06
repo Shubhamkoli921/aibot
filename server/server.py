@@ -1,7 +1,7 @@
 import os
 import secrets
 import calendar
-from flask import Flask, jsonify, request, render_template, session
+from flask import Flask, jsonify, request, render_template, session , g
 from flask_cors import CORS
 from flask_jwt_extended import create_access_token, JWTManager
 from pymongo import MongoClient
@@ -19,6 +19,7 @@ from pymongo.errors import DuplicateKeyError
 from io import StringIO
 import datetime as dt
 from collections import Counter
+from functools import wraps
 
 import openai       
 # import re
@@ -71,8 +72,28 @@ historyofchats = db.chathistory
 
 
 
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = request.headers.get('Authorization')
+
+        if not token:
+            return jsonify({'message': 'Token is missing'}), 401
+
+        try:
+            data = jwt.decode(token, app.config['1F76961362D832146966AEEFE7C8CEB06BE3A9BEFD40B2707FBCEC32E436BB44'])
+        except:
+            return jsonify({'message': 'Token is invalid'}), 401
+
+        return f(*args, **kwargs)
+
+    return decorated
+ 
 @app.route('/chat', methods=['POST'])
 def chat():
+
+   
+
     try:
         user_query = request.json.get('message', '').lower()
         user_id = request.json.get('userId', '')
@@ -107,12 +128,20 @@ def get_current_timestamp():
     return dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 @app.route('/chat/history', methods=['GET'])
+@jwt_required()
 def get_chat_history():
     try:
+
+
+        current_admin_id = get_jwt_identity()
+        admin_chat_history = list(historyofchats.find({"admin_id": current_admin_id}))
+
+
         user_id = request.args.get('userId', '')
         user_name = request.args.get('userName', '')
 
-        print(f"Debug - User ID: {user_id}, User Name: {user_name}")
+        # Access adminusersinfo from Flask's request context
+        # adminusersinfo = g.adminusersinfo
 
         # Retrieve chat history for all users
         all_chat_history = list(historyofchats.find())
@@ -192,6 +221,7 @@ def get_chat_history():
             'user_message_counts': dict(user_message_counts),
             'bot_message_counts': dict(bot_message_counts),
             'all_chathistory': formatted_all_chathistory,
+            'admin_id': current_admin_id,
             # 'chat_history': chat_history,
             # 'userchat_history': [{"user_name": name, "user_chat_history": history} for name, history in user_chat_history_grouped.items()],
             'daywise_chat_counts': daywise_chat_counts,
@@ -266,49 +296,6 @@ def super_admin_login():
 
 
 
-@app.route('/admin/signup', methods=['POST'])
-def admin_signup():
-    data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
-
-    existing_admin = admin_info.find_one({'username': username})
-    if existing_admin:
-        return jsonify({'error': 'Username already exists'}), 400
-
-    hashed_password = generate_password_hash(password)
-    new_admin = {
-        'username': username,
-        'password': hashed_password,
-        'role': 'admin'
-    }
-    admin_info.insert_one(new_admin)
-    return jsonify({'message': 'Admin created successfully'}), 201
-
-
-@app.route('/admin/login', methods=['POST'])
-def admin_login():
-    data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
-
-    admin = admin_info.find_one({'username': username})
-    if admin and check_password_hash(admin['password'], password):
-        user_id = str(admin['_id'])
-        access_token = create_access_token(identity=user_id)
-        return jsonify(access_token=access_token), 200
-    else:
-        return jsonify({'error': 'Invalid credentials'}), 401
-
-
-def insert_user_data(data):
-    data["timestamp"] = datetime.now()
-    profile_info.insert_one(data)
-@app.route('/admin/register', methods=['POST'])
-def register():
-    data = request.get_json()
-    insert_user_data(data)
-    return jsonify({'message': 'User registered successfully!'})
 
 
 
@@ -377,18 +364,51 @@ def admin(admin_id):
         adminusersinfo.delete_one({'_id': ObjectId(admin_id)})
         return jsonify({'message': 'Admin deleted successfully'}), 200
 
+# @app.route('/login', methods=['POST'])
+# def login():
+#     data = request.json
+#     username = data.get('name')
+#     password = data.get('password')
+
+#     # Query the database to find the user
+#     admin = adminusersinfo.find_one({'name': username, 'password': password})
+
+#     if admin:
+#         # If user is found, create an access token
+#         access_token = create_access_token(identity=str(admin['_id']))
+#         # Return the access token as JSON response
+#         return jsonify(access_token=access_token), 200
+#     else:
+#         # If user is not found or credentials are incorrect, return error response
+#         return jsonify({'error': 'Invalid credentials'}), 401
+#     # Replace the example with your authentication logic
+
+# Login endpoint
 @app.route('/login', methods=['POST'])
 def login():
     data = request.json
-    username = data.get('username')
+    username = data.get('name')
     password = data.get('password')
 
-    admin = adminusersinfo.find_one({'name': username})
-    if admin and check_password_hash(admin['password'], password):
-        return jsonify({'message': 'Login successful'}), 200
+    # Query the database to find the user
+    user = adminusersinfo.find_one({'name': username})
+
+    if user and check_password_hash(user['password'], password):
+        # If user is found and password matches, create an access token
+        access_token = create_access_token(identity=str(user['_id']))
+        # Return the access token as JSON response
+        return jsonify(access_token=access_token), 200
     else:
+        # If user is not found or credentials are incorrect, return error response
         return jsonify({'error': 'Invalid credentials'}), 401
 
+# Protected route example
+@app.route('/protected', methods=['GET'])
+@jwt_required()
+def protected():
+    # Access the identity of the current user with get_jwt_identity
+    current_user = get_jwt_identity()
+    return jsonify(logged_in_as=current_user), 200
 
 
 def get_next_product_id():

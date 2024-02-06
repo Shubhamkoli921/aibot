@@ -4,36 +4,16 @@ import { MdEdit } from "react-icons/md";
 import { FcFullTrash, FcRules } from "react-icons/fc";
 import Modal from "react-modal";
 import '../css/style.css'
+import { useLocation } from "react-router-dom";
 // import { IoPersonAddSharp } from "react-icons/tb";
 
 const User = () => {
 
-  const [content, setContent] = useState('ShowUser')
+  const location = useLocation();
+  const token = location.state ? location.state.token : '';
 
-  const handleOnclick = (section) => {
-    setContent(section === content ? 'AddUsers' : section);
-  }
+  const [content, setContent] = useState('ShowUser');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  // const [modalFormData, ] = useState({
-  //   name: '',
-  //   business_name: '',
-  //   logo: '',
-  //   email: '',
-  //   phone: '',
-  //   city: '',
-  //   pincode: '',
-  //   password: '',
-  //   enabled: true,
-  // });
-
-  const openModal = () => {
-    setIsModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-  };
-
   const [admins, setAdmins] = useState([]);
   const [formData, setFormData] = useState({
     name: '',
@@ -44,124 +24,151 @@ const User = () => {
     city: '',
     pincode: '',
     password: '',
+    confirmPassword: "",
     enabled: true,
   });
-  const [updatingAdminId, setUpdatingAdminId] = useState(null);
-  useEffect(() => {
-    fetch('http://localhost:5000/admins')
-      .then((response) => response.json())
-      .then((data) => setAdmins(data.admins))
-      .catch((error) => console.error('Error fetching admins:', error));
+  const [updatingAdminId, setUpdatingAdminId] = useState(null); // Define updatingAdminId state
 
-  }, []); // Empty dependency array, so it runs only once
+  const handleOnclick = (section) => {
+    setContent(section === content ? 'AddUsers' : section);
+  };
+
+  const openModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+
   const handleInputChange = (e, fieldName) => {
     setFormData({ ...formData, [fieldName]: e.target.value });
   };
 
-  const handleAddAdmin = () => {
-    fetch('http://localhost:5000/admins', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(formData),
-    })
-      .then((response) => response.json())
-      .then(() => {
-        // After adding, fetch the updated list of admins
-        fetch('http://localhost:5000/admins')
-          .then((response) => response.json())
-          .then((data) => setAdmins(data.admins))
-          .catch((error) => console.error('Error fetching admins:', error));
+  const fetchAdmins = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/admins', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch admins');
+      }
+      const data = await response.json();
+      setAdmins(data.admins);
+    } catch (error) {
+      console.error('Error fetching admins:', error);
+    }
+  };
 
-        // Clear the form fields after adding
-        setFormData({
-          name: '',
-          business_name: '',
-          logo: '',
-          email: '',
-          phone: '',
-          city: '',
-          pincode: '',
-          password: '',
-          enabled: true,
-        });
-      })
-      .catch((error) => console.error('Error adding admin:', error));
-  };
-  const handleDeleteAdmin = (adminId) => {
-    fetch(`http://localhost:5000/admins/${adminId}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(formData),
-    })
-      .then(() => {
-        // After deleting, fetch the updated list of admins
-        fetch('http://localhost:5000/admins')
-          .then((response) => response.json())
-          .then((data) => setAdmins(data.admins))
-          .catch((error) => console.error('Error fetching admins:', error));
-      })
-      .catch((error) => console.error('Error deleting admin:', error));
-  };
-  const handleUpdateAdmin = (adminId) => {
-    // Fetch the details of the admin to be updated
-    fetch(`http://localhost:5000/admins/${adminId}`)
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("showing me updating data when click update button", data);
-        setFormData({
-          name: data.name || '',
-          business_name: data.business_name || '',
-          logo: data.logo || '',
-          email: data.email || '',
-          phone: data.phone || '',
-          city: data.city || '',
-          pincode: data.pincode || '',
-          password: data.password || '',
-          enabled: data.enabled || true,
-        });
-        setUpdatingAdminId(adminId);
-        openModal(); // Open the modal when data is fetched
-      })
-      .catch((error) => console.error('Error fetching admin details:', error));
-  };
-  const handleSaveUpdate = () => {
-    // Update the admin details
-    fetch(`http://localhost:5000/admins/${updatingAdminId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(formData), // Use modalFormData for updating
-    })
-      .then(() => {
-        // After updating, fetch the updated list of admins
-        fetch('http://localhost:5000/admins')
-          .then((response) => response.json())
-          .then((data) => {
-            setAdmins(data.admins)
-            closeModal();
-          })
+  useEffect(() => {
+    if (token) {
+      fetchAdmins();
+    }
+  }, [token])
 
-          .catch((error) => console.error('Error fetching admins:', error));
-        setFormData({
-          name: '',
-          business_name: '',
-          logo: '',
-          email: '',
-          phone: '',
-          city: '',
-          pincode: '',
-          password: '',
-          enabled: true,
-        });
-        setUpdatingAdminId(null);
-        // Close the modal after updating
-      })
-      .catch((error) => console.error('Error updating admin:', error));
+  const handleAddAdmin = async () => {
+    if (formData.password !== formData.confirmPassword) {
+      alert("Password and Confirm Password do not match!");
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:5000/admins', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(formData),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to add admin');
+      }
+      alert("Added successfully");
+      setFormData({
+        name: '',
+        business_name: '',
+        logo: '',
+        email: '',
+        phone: '',
+        city: '',
+        pincode: '',
+        password: '',
+        confirmPassword: '',
+        enabled: true,
+      });
+      fetchAdmins();
+    } catch (error) {
+      console.error('Error adding admin:', error);
+    }
+  };
+
+  const handleDeleteAdmin = async (adminId) => {
+    try {
+      const response = await fetch(`http://localhost:5000/admins/${adminId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to delete admin');
+      }
+      fetchAdmins();
+    } catch (error) {
+      console.error('Error deleting admin:', error);
+    }
+  };
+  const handleUpdateAdmin = async (adminId) => {
+    try {
+      const response = await fetch(`http://localhost:5000/admins/${adminId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch admin details');
+      }
+      const data = await response.json();
+      setFormData({
+        name: data.name || '',
+        business_name: data.business_name || '',
+        logo: data.logo || '',
+        email: data.email || '',
+        phone: data.phone || '',
+        city: data.city || '',
+        pincode: data.pincode || '',
+        password: data.password || '',
+        enabled: data.enabled || true,
+      });
+      setUpdatingAdminId(adminId);
+      openModal();
+    } catch (error) {
+      console.error('Error fetching admin details:', error);
+    }
+  };
+
+  const handleSaveUpdate = async () => {
+    try {
+      const response = await fetch(`http://localhost:5000/admins/${updatingAdminId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(formData),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to update admin');
+      }
+      fetchAdmins(); // Refresh the admins list after updating
+      closeModal();
+    } catch (error) {
+      console.error('Error updating admin:', error);
+    }
   };
 
   return (
@@ -231,34 +238,35 @@ const User = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {admins.map((user) => (
-                      <tr
-                        key={user._id}
-                        className="hover:bg-gray-100 grid grid-cols-9 w-full text-xs "
-                      >
-                        <td className="p-2 text-center">{user.logo}</td>
-                        <td className="p-2 text-center">{user.name}</td>
-                        <td className="p-2 text-center">{user.business_name}</td>
-                        <td className="p-2 text-center col-span-2  ">{user.email}</td>
-                        <td className="p-2 text-center">{user.phone}</td>
-                        <td className="p-2 text-center">{user.city}</td>
-                        <td className="p-2 text-center">{user.pincode}</td>
-                        <td className="p-2 flex justify-between text-center">
-                          <MdEdit onClick={() => handleUpdateAdmin(user._id)} size={18} className="cursor-pointer" />
-                          {/* <button onClick={() => handleDeleteAdmin(admin._id)}>Delete</button> */}
-                          <FcFullTrash size={18} onClick={() => handleDeleteAdmin(user._id)} className="cursor-pointer" />
-                          {/* <button >Update</button> */}
-                          <label class="switch">
-                            <input type="checkbox" />
-                            <div class="slider"></div>
-                            <div class="slider-card">
-                              <div class="slider-card-face slider-card-front"></div>
-                              <div class="slider-card-face slider-card-back"></div>
-                            </div>
-                          </label>
-                        </td>
+                    {admins && admins.length > 0 ? (
+                      admins.map((user) => (
+                        <tr key={user._id} className="hover:bg-gray-100 grid grid-cols-9 w-full text-xs">
+                          <td className="p-2 text-center">{user.logo}</td>
+                          <td className="p-2 text-center">{user.name}</td>
+                          <td className="p-2 text-center">{user.business_name}</td>
+                          <td className="p-2 text-center col-span-2">{user.email}</td>
+                          <td className="p-2 text-center">{user.phone}</td>
+                          <td className="p-2 text-center">{user.city}</td>
+                          <td className="p-2 text-center">{user.pincode}</td>
+                          <td className="p-2 flex justify-between text-center">
+                            <MdEdit onClick={() => handleUpdateAdmin(user._id)} size={18} className="cursor-pointer" />
+                            <FcFullTrash size={18} onClick={() => handleDeleteAdmin(user._id)} className="cursor-pointer" />
+                            <label className="switch">
+                              <input type="checkbox" />
+                              <div className="slider"></div>
+                              <div className="slider-card">
+                                <div className="slider-card-face slider-card-front"></div>
+                                <div className="slider-card-face slider-card-back"></div>
+                              </div>
+                            </label>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="8">No admins found</td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>,
@@ -273,6 +281,21 @@ const User = () => {
                     value={formData.name}  // Set the value prop to formData.name
                     onChange={(e) => handleInputChange(e, 'name')}  // Pass the field name as a second argument
                   />
+                  <input
+                    type="password"
+                    placeholder="Password"
+                    className="border-none items-center p-2 m-2 rounded-lg bg-gray-200"
+                    value={formData.password}
+                    onChange={(e) => handleInputChange(e, "password")}
+                  />
+                  <input
+                    type="password"
+                    placeholder="Confirm Password"
+                    className="border-none items-center p-2 m-2 rounded-lg bg-gray-200"
+                    value={formData.confirmPassword}
+                    onChange={(e) => handleInputChange(e, "confirmPassword")}
+                  />
+
                   <input type="text"
                     placeholder="Business Name"
                     className=" border-none  items-center p-2 m-2 rounded-lg bg-gray-200 "
@@ -305,7 +328,7 @@ const User = () => {
                   />
                   <input type="text"
                     placeholder="logo"
-                    className=" border-none col-span-3  items-center p-2 m-2 rounded-lg bg-gray-200 "
+                    className=" border-none   items-center p-2 m-2 rounded-lg bg-gray-200 "
                     value={formData.logo}
                     onChange={(e) => handleInputChange(e, 'logo')}
                   />
@@ -333,10 +356,10 @@ const User = () => {
           >
             <div className="flex justify-between w-full p-4 bg-blue-500 text-white rounded-md">
 
-            <h2>Update User</h2>
-            <button type="button" onClick={closeModal}>
-             <IoClose size={20} />
-            </button>
+              <h2>Update User</h2>
+              <button type="button" onClick={closeModal}>
+                <IoClose size={20} />
+              </button>
             </div>
             <form className="grid grid-cols-2 p-4 mt-3 rounded-xl ">
               <input
@@ -346,6 +369,7 @@ const User = () => {
                 value={formData.name}  // Set the value prop to formData.name
                 onChange={(e) => handleInputChange(e, 'name')}  // Pass the field name as a second argument
               />
+
               <input type="text"
                 placeholder="Business Name"
                 className=" border-none  items-center p-2 m-2 rounded-lg bg-gray-200 "
@@ -386,9 +410,9 @@ const User = () => {
             </form>
             <div className="flex w-full justify-center items-center">
 
-            <button className="text-xl" type="button" onClick={handleSaveUpdate}>
-              Save 
-            </button>
+              <button className="text-xl" type="button" onClick={handleSaveUpdate}>
+                Save
+              </button>
               <FcRules size={20} />
             </div>
 

@@ -20,8 +20,8 @@ const Dashboard = () => {
   
     const navigationItems = [
       { label:'Dashboard',id:'dash'},
-      { label: 'Data processing', id: 'data' },
-      { label: 'Chat history', id: 'chat' },
+      { label: 'User', id: 'chat' },
+      { label: 'Reports', id: 'data' },
       { label: 'Profile', id: 'profile' },
     ];
     return (
@@ -50,9 +50,9 @@ const Dashboard = () => {
                 </div>
                 <div className='w-[80%] bg-slate-100 h-full'>
                     {content === 'dash' && <DashBoardData />}
-                    {content === 'data' && <Profiles />}
                     {content === 'chat' && <User />}
-                    {content === 'profile' && <Report />}
+                    {content === 'data' && <Report />}
+                    {content === 'profile' && <Profiles />}
                     {!content && <p>Select a section</p>}
                 </div>
             </div>
