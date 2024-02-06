@@ -501,4 +501,5 @@ def add_bulk_products():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=8000)
+    print(f"The Flask app is running on port: {app.url_map.port}")
