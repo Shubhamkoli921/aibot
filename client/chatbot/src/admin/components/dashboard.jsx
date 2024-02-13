@@ -3,6 +3,7 @@ import Data from "../pages/data";
 import Profile from "../pages/profile";
 import DashboardCom from "../pages/dashboardcom";
 import Chats from "../../chatbot/chatbot";
+import Chat from "../pages/chat";
 
 const AdminDashBoard = ({ token, adminId }) => {
   const [content, setContent] = useState('dash');
@@ -15,7 +16,8 @@ const AdminDashBoard = ({ token, adminId }) => {
     { label: 'Dashboard', id: 'dash' },
     { label: 'Data processing', id: 'data' },
     { label: 'Profile', id: 'profile' },
-    { label: 'Chat Data', id: 'chattext' }
+    { label: 'Chat Data', id: 'chattext' },
+    { label: 'chat History', id: 'chathistory' }
   ];
 
   return (
@@ -29,9 +31,8 @@ const AdminDashBoard = ({ token, adminId }) => {
               {navigationItems.map((item) => (
                 <li
                   key={item.id}
-                  className={`p-2 rounded cursor-pointer ${
-                    content === item.id ? 'bg-blue-400 ease-in-out ' : ''
-                  }`}
+                  className={`p-2 rounded cursor-pointer ${content === item.id ? 'bg-blue-400 ease-in-out ' : ''
+                    }`}
                   onClick={() => handleClick(item.id)}
                 >
                   {item.label}
@@ -48,6 +49,7 @@ const AdminDashBoard = ({ token, adminId }) => {
           {content === 'data' && <Data />}
           {content === 'profile' && <Profile />}
           {content === 'chattext' && <Chats token={token} adminId={adminId} />}
+          {content === 'chathistory' && <Chat />}
           {!content && <p>Select a section</p>}
         </div>
       </div>

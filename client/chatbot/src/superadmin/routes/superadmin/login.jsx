@@ -10,8 +10,8 @@ import signibg from "../../assets/signin.jpg";
 
 function Login({ updateToken, updateAdminId }) {
   const navigate = useNavigate();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('superadmin');
+  const [password, setPassword] = useState('superadminpassword');
   const [loginType, setLoginType] = useState('admin');
 
   const handleLogin = () => {
@@ -19,13 +19,14 @@ function Login({ updateToken, updateAdminId }) {
     const superAdmin = { username: username, password: password };
 
     axios.post(
-      loginType === 'admin' ? 'http://localhost:5000/login' : 'http://localhost:5000/superadmin/login',
+      loginType === 'admin' ? 'http://localhost:8000/login' : 'http://localhost:8000/superadmin/login',
       loginType === 'admin' ? admin : superAdmin
     )
       .then(response => {
         const { access_token, adminId } = response.data;
         updateToken(access_token);
         updateAdminId(adminId);
+        console.log("sadmin>>>",adminId);
        
         if(loginType === 'admin'){
           navigate('/adm/dashboard', { state: { token: access_token, adminId: adminId } });

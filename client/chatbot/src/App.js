@@ -23,11 +23,11 @@ const App = () => {
   const handlePasswordChange = (event) => {
     setPassword(event.target.value);
   };
-
+  
   return (
     <Provider store={store}> {/* Wrap your app with Provider and pass the Redux store */}
       <>
-        hello plz provide routes
+        {/* hello plz provide routes */}
         <BrowserRouter>
           <Routes>
             <Route path="/sup/dashboard" element={<Dashboard />} />
@@ -38,7 +38,7 @@ const App = () => {
             <Route path="/adm/dashboard" element={<AdminDashBoard />} />
             <Route path="/superlogin" element={<Login />} />
             <Route path="/test" element={<AdminList />} />
-            <Route path="/chat" element={<Chatbot username={username} password={password} />} />
+            <Route path="/chat/:adminId" element={<Chatbot />} />
           </Routes>
         </BrowserRouter>
       </>

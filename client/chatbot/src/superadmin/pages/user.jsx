@@ -1,17 +1,25 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { IoClose, IoPersonAddSharp } from "react-icons/io5";
 import { MdEdit } from "react-icons/md";
 import { FcFullTrash, FcRules } from "react-icons/fc";
+import { connect } from 'react-redux';
 import Modal from "react-modal";
+import {  useSelector } from 'react-redux';
 import '../css/style.css'
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useDispatch } from 'react-redux';
+// import { updateChatbotLink } from '../../state/action.js';
+import { updateChatbotLink } from '../../state/action.js';
+
 // import { IoPersonAddSharp } from "react-icons/tb";
 
 const User = () => {
 
   const location = useLocation();
   const token = location.state ? location.state.token : '';
-
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const chatbotLink = useSelector((state) => state.chatbotLink);
   const [content, setContent] = useState('ShowUser');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [admins, setAdmins] = useState([]);
@@ -25,9 +33,11 @@ const User = () => {
     pincode: '',
     password: '',
     confirmPassword: "",
+    chatbotLink: '', // Added chatbot link state
     enabled: true,
   });
   const [updatingAdminId, setUpdatingAdminId] = useState(null); // Define updatingAdminId state
+  // const [chatbotLink, setChatbotLink] = useState('');
 
   const handleOnclick = (section) => {
     setContent(section === content ? 'AddUsers' : section);
@@ -45,9 +55,9 @@ const User = () => {
     setFormData({ ...formData, [fieldName]: e.target.value });
   };
 
-  const fetchAdmins = async () => {
+  const fetchAdmins = useCallback(async () => {
     try {
-      const response = await fetch('http://localhost:5000/admins', {
+      const response = await fetch('http://localhost:8000/admins', {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -57,16 +67,18 @@ const User = () => {
       }
       const data = await response.json();
       setAdmins(data.admins);
+      setFormData({ ...formData, chatbotLink: data.chatbot_link });
+      dispatch(updateChatbotLink(data.chatbotLinks));// setChatbotLink(data.chatbot_link); // Set the chatbot link received from the server
     } catch (error) {
       console.error('Error fetching admins:', error);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     if (token) {
       fetchAdmins();
     }
-  }, [token])
+  }, [token, fetchAdmins]);
 
   const handleAddAdmin = async () => {
     if (formData.password !== formData.confirmPassword) {
@@ -75,7 +87,7 @@ const User = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/admins', {
+      const response = await fetch('http://localhost:8000/admins', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -86,7 +98,10 @@ const User = () => {
       if (!response.ok) {
         throw new Error('Failed to add admin');
       }
+      const data = await response.json();
+
       alert("Added successfully");
+      setFormData({ ...formData, chatbotLink: data.chatbot_link }); // Set the chatbot link received from the server
       setFormData({
         name: '',
         business_name: '',
@@ -105,9 +120,10 @@ const User = () => {
     }
   };
 
+
   const handleDeleteAdmin = async (adminId) => {
     try {
-      const response = await fetch(`http://localhost:5000/admins/${adminId}`, {
+      const response = await fetch(`https://chatbotserver1.onrender.com/admins/${adminId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -124,7 +140,7 @@ const User = () => {
   };
   const handleUpdateAdmin = async (adminId) => {
     try {
-      const response = await fetch(`http://localhost:5000/admins/${adminId}`, {
+      const response = await fetch(`http://localhost:8000/admins/${adminId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -145,6 +161,7 @@ const User = () => {
         enabled: data.enabled || true,
       });
       setUpdatingAdminId(adminId);
+
       openModal();
     } catch (error) {
       console.error('Error fetching admin details:', error);
@@ -153,7 +170,7 @@ const User = () => {
 
   const handleSaveUpdate = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/admins/${updatingAdminId}`, {
+      const response = await fetch(`https://chatbotserver1.onrender.com/${updatingAdminId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -170,8 +187,16 @@ const User = () => {
       console.error('Error updating admin:', error);
     }
   };
+  const handleChatbotLinkClick = (adminId, chatbotLink) => {
+    // Dispatch the action to update the chatbot link in Redux
+    dispatch(updateChatbotLink(chatbotLink));
+
+    // Navigate to the chat page with the adminId
+    navigate(`/chat/${adminId}`);
+  };
 
   return (
+
     <div className="w-full h-full">
       <div className="flex flex-col">
         <div className="flex p-2 w-full justify-center">
@@ -226,13 +251,14 @@ const User = () => {
                 <table className="flex flex-col rounded-xl w-full bg-white p-4 mt-10   ">
                   <thead className="mt-5">
                     <tr className="grid grid-cols-9 text-sm text-gray-600">
-                      <th className=" p-2 col-span-1">Logo</th>
+                      <th className=" p-2 ">Logo</th>
                       <th className=" p-2">Owner Name</th>
                       <th className=" p-2">Business Name</th>
-                      <th className=" p-2 col-span-2  ">Email</th>
+                      <th className=" p-2 col-span-1  ">Email</th>
                       <th className=" p-2">Phone</th>
                       <th className=" p-2">City</th>
                       <th className=" p-2">Pincode</th>
+                      <th className=" p-2">Link</th>
                       <th className="p-2">Action</th>
                       {/* <th className="p-2">Action</th> */}
                     </tr>
@@ -244,10 +270,13 @@ const User = () => {
                           <td className="p-2 text-center">{user.logo}</td>
                           <td className="p-2 text-center">{user.name}</td>
                           <td className="p-2 text-center">{user.business_name}</td>
-                          <td className="p-2 text-center col-span-2">{user.email}</td>
+                          <td className="p-2 text-center col-span-1">{user.email}</td>
                           <td className="p-2 text-center">{user.phone}</td>
                           <td className="p-2 text-center">{user.city}</td>
                           <td className="p-2 text-center">{user.pincode}</td>
+                          <td className="p-2 text-center cursor-pointer">
+                            <a href={user.chatbot_link} onClick={() => handleChatbotLinkClick(user._id, user.chatbot_link)}>cht</a>
+                          </td>
                           <td className="p-2 flex justify-between text-center">
                             <MdEdit onClick={() => handleUpdateAdmin(user._id)} size={18} className="cursor-pointer" />
                             <FcFullTrash size={18} onClick={() => handleDeleteAdmin(user._id)} className="cursor-pointer" />
@@ -267,6 +296,7 @@ const User = () => {
                         <td colSpan="8">No admins found</td>
                       </tr>
                     )}
+
                   </tbody>
                 </table>
               </div>,
@@ -419,10 +449,15 @@ const User = () => {
           </Modal>
         </div>
       </div>
+      {/* {console.log("link....",chatbotLink)} */}
     </div>
   );
 };
 
-export default User;
+const mapStateToProps = (state) => ({
+  adminId: state.adminId,
+  chatbotLinks: state.chatbotLinks,
+});
 
+export default connect(mapStateToProps)(User);
 

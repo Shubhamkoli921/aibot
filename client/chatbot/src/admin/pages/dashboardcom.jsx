@@ -24,7 +24,7 @@ const DashboardCom = ({ token, adminId }) => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await axios.get("http://localhost:5000/chat/history", {
+                const response = await axios.get("https://chatbotserver1.onrender.com/chat/history", {
                     headers: {
                         Authorization: `Bearer ${token}`
                     }

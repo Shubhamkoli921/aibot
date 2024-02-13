@@ -128,7 +128,7 @@ const ProductTable = () => {
 
   useEffect(() => {
     // Fetch products from Flask API on component mount
-    axios.get("http://localhost:5000/products")
+    axios.get("https://chatbotserver1.onrender.com/products")
       .then(response => setProducts(response.data))
       .catch(error => console.error("Error fetching products:", error));
   }, []);
@@ -139,11 +139,11 @@ const ProductTable = () => {
   };
 
   const handleUpdate = (productId, updatedFields) => {
-    axios.put(`http://localhost:5000/products/${productId}`, updatedFields)
+    axios.put(`https://chatbotserver1.onrender.com/${productId}`, updatedFields)
       .then(response => {
         console.log(response.data.message);
         // Fetch updated products after successful update
-        axios.get("http://localhost:5000/products")
+        axios.get("https://chatbotserver1.onrender.com/products")
           .then(response => setProducts(response.data))
           .catch(error => console.error("Error fetching products:", error));
       })
@@ -153,11 +153,11 @@ const ProductTable = () => {
   };
 
   const handleDelete = (productId) => {
-    axios.delete(`http://localhost:5000/products/${productId}`)
+    axios.delete(`https://chatbotserver1.onrender.com/products/${productId}`)
       .then(response => {
         console.log(response.data.message);
         // Fetch updated products after successful deletion
-        axios.get("http://localhost:5000/products")
+        axios.get("https://chatbotserver1.onrender.com/products")
           .then(response => setProducts(response.data))
           .catch(error => console.error("Error fetching products:", error));
       })
@@ -167,11 +167,11 @@ const ProductTable = () => {
   };
 
   const handleAddProduct = () => {
-    axios.post("http://localhost:5000/products", newProduct)
+    axios.post("https://chatbotserver1.onrender.com/products", newProduct)
       .then(response => {
         console.log("Product added with ID:", response.data.id);
         // Fetch updated products after successful addition
-        axios.get("http://localhost:5000/products")
+        axios.get("https://chatbotserver1.onrender.com/products")
           .then(response => setProducts(response.data))
           .catch(error => console.error("Error fetching products:", error));
       })
@@ -198,11 +198,11 @@ const ProductTable = () => {
           description: row[2],
         }));
 
-        axios.post("http://localhost:5000/products/bulk", newProducts)
+        axios.post("https://chatbotserver1.onrender.com/products/bulk", newProducts)
           .then(response => {
             console.log("Products added successfully");
             // Fetch updated products after successful bulk addition
-            axios.get("http://localhost:5000/products")
+            axios.get("https://chatbotserver1.onrender.com/products")
               .then(response => setProducts(response.data))
               .catch(error => console.error("Error fetching products:", error));
           })

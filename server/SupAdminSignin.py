@@ -1,7 +1,7 @@
 import os
 import secrets
 import calendar
-from flask import Flask, jsonify, request, render_template, session , g
+from flask import Flask, jsonify, request, render_template, session , g ,url_for
 from flask_cors import CORS
 from flask_jwt_extended import create_access_token, JWTManager
 from pymongo import MongoClient
@@ -11,6 +11,7 @@ from flask_pymongo import PyMongo
 from bson import ObjectId
 from bson import json_util
 from collections import defaultdict
+import logging
 
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
@@ -33,7 +34,7 @@ bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
 app.secret_key = 't4Wm8Y0ypwYLzcwhDmEqJg'   
 
-openai.api_key = "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"
+openai.api_key = "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"
 
 # Sample CSV data (replace this with the actual CSV data from MongoDB)
 csv_data = """
@@ -83,54 +84,66 @@ def token_required(f):
 
 
 
-@app.route('/chat', methods=['POST'])
+@app.route('/chat', methods=['GET', 'POST'])
 @jwt_required()
 def chat():
-    try:
-        current_user = get_jwt_identity()
-        user_query = request.json.get('message', '').lower()
-        user_id = request.json.get('userId', '')
-        user_name = request.json.get('userName', '')
-        admin_id = current_user  # Assigning current_user directly to admin_id
+    if request.method == 'GET':
+        try:
+            # Provide initial instructions or data for initializing the chat session
+            initial_message = "Hello! I'm Chatbot.ai. Please provide your name to start the conversation."
+            return jsonify({'message': initial_message})
 
-        chat_history_user = {
-            "user_id": user_id,
-            "user_name": user_name,
-            "admin_id": admin_id,
-            "role": "user",
-            "message": user_query,
-            "timestamp": get_current_timestamp()
-        }
-        demochats.insert_one(chat_history_user)
+        except Exception as e:
+            print('Error:', e)
+            response_data = {'message': 'An error occurred. Please try again later.'}
+            return jsonify(response_data), 500
+    elif request.method == 'POST':
+        try:
+            # Handle the POST request for sending and receiving messages
+            current_user = get_jwt_identity()
+            user_query = request.json.get('message', '').lower()
+            user_id = request.json.get('userId', '')
+            user_name = request.json.get('userName', '')
+            admin_id = current_user  # Assigning current_user directly to admin_id
 
-        response = openai.Completion.create(
-            engine="gpt-3.5-turbo-instruct",
-            prompt=f"User: {user_query}\nChatbot:",
-            temperature=0.7,
-            max_tokens=150,
-            )
-        bot_response = response['choices'][0]['text']
+            chat_history_user = {
+                "user_id": user_id,
+                "user_name": user_name,
+                "admin_id": admin_id,
+                "role": "user",
+                "message": user_query,
+                "timestamp": get_current_timestamp()
+            }
+            demochats.insert_one(chat_history_user)
 
-        chat_history_bot = {
-            "user_id": user_id,
-            "user_name": user_name,
-            "admin_id": admin_id,
-            "role": "bot",
-            "message": bot_response,
-            "timestamp": get_current_timestamp()
-        }
-        demochats.insert_one(chat_history_bot)
+            response = openai.Completion.create(
+                engine="gpt-3.5-turbo-instruct",
+                prompt=f"User: {user_query}\nChatbot:",
+                temperature=0.7,
+                max_tokens=150,
+                )
+            bot_response = response['choices'][0]['text']
 
-        response_data = {
-            'message': bot_response,
-            'admin_id': admin_id
-        }
-        return jsonify(response_data), 200
+            chat_history_bot = {
+                "user_id": user_id,
+                "user_name": user_name,
+                "admin_id": admin_id,
+                "role": "bot",
+                "message": bot_response,
+                "timestamp": get_current_timestamp()
+            }
+            demochats.insert_one(chat_history_bot)
 
-    except Exception as e:
-        print('Error:', e)
-        response_data = {'message': 'An error occurred. Please try again later.'}
-        return jsonify(response_data), 500
+            response_data = {
+                'message': bot_response,
+                'admin_id': admin_id
+            }
+            return jsonify(response_data), 200
+
+        except Exception as e:
+            print('Error:', e)
+            response_data = {'message': 'An error occurred. Please try again later.'}
+            return jsonify(response_data), 500
 
 @app.before_request
 def set_admin_id():
@@ -254,17 +267,19 @@ def super_admin_login():
 
     superadmin = db.superadmin.find_one({'username': username})
     if superadmin and check_password_hash(superadmin['password'], password):
-        user_id = str(superadmin['_id'])
-        access_token = create_access_token(identity=user_id)
-        return jsonify(access_token=access_token), 200
-        return jsonify({'success': True, 'message': 'Login successful by server'})
+        admin_id = str(superadmin['_id'])
+        access_token = create_access_token(identity=admin_id)
+        return jsonify(access_token=access_token, adminId=admin_id), 200
     else:
-        return jsonify({'error': 'Invalid credentialsdsds','success':False ,' message':'login un successfull by server'}), 401
+        return jsonify({'error': 'Invalid credentials'}), 401
+
        
 
 
 
-@app.route('/admins', methods=['GET', 'POST'])
+logging.basicConfig(level=logging.DEBUG)
+
+@app.route('/admins', methods=['POST','GET'])
 @jwt_required()
 def admins():
     try:
@@ -286,8 +301,22 @@ def admins():
                 'password': hashed_password,
                 'enabled': True
             }
-            adminusersinfo.insert_one(new_admin)
-            return jsonify({'message': 'Admin added successfully'}), 201
+            admin_id = adminusersinfo.insert_one(new_admin).inserted_id
+
+            # Create chatbot link based on admin_id
+            chatbot_link = f"http://localhost:3000/chat/{admin_id}"
+
+            # Update the admin document to include the chatbot link
+            adminusersinfo.update_one(
+                {'_id': admin_id},
+                {'$set': {'chatbot_link': chatbot_link}}
+            )
+
+            return jsonify({
+                'message': 'Admin added successfully',
+                'admin_id': str(admin_id),
+                'chatbot_link': chatbot_link
+            }), 201
 
         elif request.method == 'GET':
             admins = list(adminusersinfo.find())
@@ -295,11 +324,14 @@ def admins():
             for admin in admins:
                 admin['_id'] = str(admin['_id'])  # Convert ObjectId to str
                 admins_list.append(admin)
-                
+
             current_admin_id = get_jwt_identity()
             return jsonify({'admins': admins_list, 'current_admin_id': current_admin_id}), 200
     except Exception as e:
+        logging.error(f"Exception occurred: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+
 
 @app.route('/admins/<admin_id>', methods=['GET', 'PUT', 'DELETE'])
 def admin(admin_id):

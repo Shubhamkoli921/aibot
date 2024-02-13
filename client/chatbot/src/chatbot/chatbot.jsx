@@ -3,23 +3,82 @@ import png from '../../src/admin/assets/chatbot.png';
 import sci from '../../src/admin/assets/science (1).png';
 import axios from "axios";
 import { connect } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate, useParams } from "react-router-dom";
+import { updateChatbotLink } from '../state/action';
+// import { updateToken } from '../state/action';
+// import { selectChatbotLinks } from '../state/selector'
 
-const Chat = ({ token, adminId }) => {
+const Chat = ({ token }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [userName, setUserName] = useState('');
   const [userId, setUserId] = useState('');
+  const { adminId } = useParams(); // Get adminId from URL params
+  const dispatch = useDispatch(); // Initialize dispatch function
+
+  const chatbotLinks = useSelector(state => state.chatbotLinks);
+
+  const navigate = useNavigate();
+
+
+
 
   useEffect(() => {
-    const initialMessages = [
-      { text: "Hello! I'm Chatbot.ai. What's your name?", sender: 'bot', time: getTime() },
-    ];
-    setMessages(initialMessages);
-    console.log("token>>>---",token);
-    console.log("admin>>>---",adminId);
-
-  }, []);
+    const fetchChatbotLinks = async (token) => {
+      console.log('token>>>>>>>>><<<<<<<<<<', token);
+      try {
+        const response = await fetch('http://localhost:8000/admins', {
+          method: 'GET',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        });
+  
+        if (!response.ok) {
+          throw new Error('Failed to fetch admins');
+        }
+  
+        const resData = await response.json();
+        console.log('resData>>>>>>>>>>>>>>>>>>>>>>>>>>>>', resData.admins);
+        // Extract chatbot links from the data
+        const chatbotLinks = resData.admins.reduce((acc, admin) => {
+          acc[admin._id] = admin.chatbot_link;
+          console.log("link>>>>>>",acc);
+          return acc;
+        }, {});
+  
+        // Update the chatbotLinks state with the extracted links
+        dispatch(updateChatbotLink(chatbotLinks));
+  
+        // Check if the chatbot link for the current adminId exists and redirect
+        const chatbotLink = chatbotLinks[adminId];
+        if (!chatbotLink) {
+          // Handle error or redirect to an error page
+          navigate('/error');
+        } else {
+          // Check if the window is already open
+          let chatbotWindow = window.open(chatbotLink, '_blank');
+          if (chatbotWindow) {
+            chatbotWindow.focus();
+          } else {
+            // Handle window blocked by browser or other issues
+            console.error('Unable to open chatbot window');
+          }
+        }
+        
+      } catch (error) {
+        console.error(error);
+        navigate('/error');
+      }
+    };
+  
+    fetchChatbotLinks(token);
+  }, [dispatch, navigate, adminId, token]);
+  
 
   const handleSendMessage = async () => {
     try {
@@ -58,16 +117,18 @@ const Chat = ({ token, adminId }) => {
       ]);
       setLoading(true);
 
-      if (!token) {
-        throw new Error('Token not available');
-      }
 
       const response = await axios.post(
-        `http://localhost:5000/chat?q=${encodeURIComponent(newMessage)}&userId=${userId}`,
+        `http://localhost:8000/chat?q=${encodeURIComponent(newMessage)}&admin_id=${adminId}`,
         { message: newMessage, userId: userId, userName: userName },
-        { headers: { Authorization: `Bearer ${token}` } }
-        );
-       
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+      
+
       if (!response.data) {
         throw new Error('Empty response');
       }
@@ -178,8 +239,9 @@ const Chat = ({ token, adminId }) => {
 };
 
 const mapStateToProps = (state) => ({
-  token: state.token,
   adminId: state.adminId,
+  token: state.token,
+  // chatbotLinks: state.chatbotLinks,
 });
 
 export default connect(mapStateToProps)(Chat);
