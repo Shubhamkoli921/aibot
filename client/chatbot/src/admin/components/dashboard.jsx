@@ -16,7 +16,6 @@ const AdminDashBoard = ({ token, adminId }) => {
     { label: 'Dashboard', id: 'dash' },
     { label: 'Data processing', id: 'data' },
     { label: 'Profile', id: 'profile' },
-    { label: 'Chat Data', id: 'chattext' },
     { label: 'chat History', id: 'chathistory' }
   ];
 
@@ -48,7 +47,6 @@ const AdminDashBoard = ({ token, adminId }) => {
           {content === 'dash' && <DashboardCom />}
           {content === 'data' && <Data />}
           {content === 'profile' && <Profile />}
-          {content === 'chattext' && <Chats token={token} adminId={adminId} />}
           {content === 'chathistory' && <Chat />}
           {!content && <p>Select a section</p>}
         </div>

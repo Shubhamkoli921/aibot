@@ -9,7 +9,7 @@ import { updateChatbotLink } from '../state/action';
 // import { updateToken } from '../state/action';
 // import { selectChatbotLinks } from '../state/selector'
 
-const Chat = ({ token }) => {
+const Chat = () => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -24,17 +24,17 @@ const Chat = ({ token }) => {
 
 
 
-
+  
   useEffect(() => {
-    const fetchChatbotLinks = async (token) => {
-      console.log('token>>>>>>>>><<<<<<<<<<', token);
+    const fetchChatbotLinks = async () => {
+      // console.log('token>>>>>>>>><<<<<<<<<<', );
       try {
         const response = await fetch('http://localhost:8000/admins', {
           method: 'GET',
           headers: {
             Accept: 'application/json',
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
+            // Authorization: `Bearer ${token}`,
           },
         });
   
@@ -76,8 +76,8 @@ const Chat = ({ token }) => {
       }
     };
   
-    fetchChatbotLinks(token);
-  }, [dispatch, navigate, adminId, token]);
+    fetchChatbotLinks();
+  }, [dispatch, navigate, adminId ]);
   
 
   const handleSendMessage = async () => {
@@ -120,12 +120,8 @@ const Chat = ({ token }) => {
 
       const response = await axios.post(
         `http://localhost:8000/chat?q=${encodeURIComponent(newMessage)}&admin_id=${adminId}`,
-        { message: newMessage, userId: userId, userName: userName },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
+        { message: newMessage, userId: userId, userName: userName }
+        
       );
       
 
@@ -240,7 +236,7 @@ const Chat = ({ token }) => {
 
 const mapStateToProps = (state) => ({
   adminId: state.adminId,
-  token: state.token,
+  // token: state.token,
   // chatbotLinks: state.chatbotLinks,
 });
 

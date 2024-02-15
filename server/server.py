@@ -1,7 +1,7 @@
 import os
 import secrets
 import calendar
-from flask import Flask, jsonify, request, render_template, session , g
+from flask import Flask, jsonify, request, render_template, session , g ,url_for
 from flask_cors import CORS
 from flask_jwt_extended import create_access_token, JWTManager
 from pymongo import MongoClient
@@ -11,6 +11,7 @@ from flask_pymongo import PyMongo
 from bson import ObjectId
 from bson import json_util
 from collections import defaultdict
+import logging
 
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
@@ -33,7 +34,7 @@ bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
 app.secret_key = 't4Wm8Y0ypwYLzcwhDmEqJg'   
 
-openai.api_key = "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"
+openai.api_key = "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"
 
 # Sample CSV data (replace this with the actual CSV data from MongoDB)
 csv_data = """
@@ -62,13 +63,8 @@ adminusersinfo = db.users
 productdetail = db.bproducts
 # users_collection = db.users
 historyofchats = db.chathistory
-# Check if data exists before inserting
-# if information.count_documents({}) == 0:
-#     users = [
-#         {'username': 'superadmin', 'password': 'superadminpassword', 'role': 'superadmin'},
-#         # {'username': 'admin1', 'password': 'admin1password', 'role': 'admin'},
-#     ]
-#     information.insert_many(users)
+demochats = db.democ
+
 
 
 
@@ -76,127 +72,110 @@ def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = request.headers.get('Authorization')
-
         if not token:
             return jsonify({'message': 'Token is missing'}), 401
-
         try:
             data = jwt.decode(token, app.config['1F76961362D832146966AEEFE7C8CEB06BE3A9BEFD40B2707FBCEC32E436BB44'])
         except:
             return jsonify({'message': 'Token is invalid'}), 401
-
         return f(*args, **kwargs)
-
     return decorated
- 
-@app.route('/chat', methods=['POST'])
+
+
+
+
+@app.route('/chat', methods=['GET', 'POST'])
+@jwt_required()
 def chat():
+    if request.method == 'GET':
+        try:
+            # Provide initial instructions or data for initializing the chat session
+            initial_message = "Hello! I'm Chatbot.ai. Please provide your name to start the conversation."
+            return jsonify({'message': initial_message})
 
-   
+        except Exception as e:
+            print('Error:', e)
+            response_data = {'message': 'An error occurred. Please try again later.'}
+            return jsonify(response_data), 500
+    elif request.method == 'POST':
+        try:
+            # Handle the POST request for sending and receiving messages
+            current_user = get_jwt_identity()
+            user_query = request.json.get('message', '').lower()
+            user_id = request.json.get('userId', '')
+            user_name = request.json.get('userName', '')
+            admin_id = current_user  # Assigning current_user directly to admin_id
 
-    try:
-        user_query = request.json.get('message', '').lower()
-        user_id = request.json.get('userId', '')
-        user_name = request.json.get('userName', '')
+            chat_history_user = {
+                "user_id": user_id,
+                "user_name": user_name,
+                "admin_id": admin_id,
+                "role": "user",
+                "message": user_query,
+                "timestamp": get_current_timestamp()
+            }
+            demochats.insert_one(chat_history_user)
 
-        # Store the user's chat history with user name
-        chat_history_user = {"user_id": user_id, "user_name": user_name, "role": "user", "message": user_query, "timestamp": get_current_timestamp()}
-        historyofchats.insert_one(chat_history_user)
+            response = openai.Completion.create(
+                engine="gpt-3.5-turbo-instruct",
+                prompt=f"User: {user_query}\nChatbot:",
+                temperature=0.7,
+                max_tokens=150,
+                )
+            bot_response = response['choices'][0]['text']
 
-        # Use OpenAI's GPT-3 to generate a response
-        response = openai.Completion.create(
-            engine="gpt-3.5-turbo-instruct",
-            prompt=f"User: {user_query}\nChatbot:",
-            temperature=0.7,
-            max_tokens=150,
-        )
-        bot_response = response['choices'][0]['text']
+            chat_history_bot = {
+                "user_id": user_id,
+                "user_name": user_name,
+                "admin_id": admin_id,
+                "role": "bot",
+                "message": bot_response,
+                "timestamp": get_current_timestamp()
+            }
+            demochats.insert_one(chat_history_bot)
 
-        # Store the bot's response in chat history
-        chat_history_bot = {"user_id": user_id, "user_name": user_name, "role": "bot", "message": bot_response, "timestamp": get_current_timestamp()}
-        historyofchats.insert_one(chat_history_bot)
+            response_data = {
+                'message': bot_response,
+                'admin_id': admin_id
+            }
+            return jsonify(response_data), 200
 
-        response_data = {'message': bot_response}
-        return jsonify(response_data), 200
+        except Exception as e:
+            print('Error:', e)
+            response_data = {'message': 'An error occurred. Please try again later.'}
+            return jsonify(response_data), 500
 
-    except Exception as e:
-        print('Error:', e)
-        response_data = {'message': 'An error occurred. Please try again later.'}
-        return jsonify(response_data), 500
+@app.before_request
+def set_admin_id():
+    g.admin_id = None
+    if hasattr(g, 'jwt_claims') and 'username' in g.jwt_claims:
+        g.admin_id = g.jwt_claims['username']
 
 def get_current_timestamp():
-    return dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+
+
 
 @app.route('/chat/history', methods=['GET'])
 @jwt_required()
 def get_chat_history():
     try:
-
-
         current_admin_id = get_jwt_identity()
-        admin_chat_history = list(historyofchats.find({"admin_id": current_admin_id}))
+        admin_chat_history = list(demochats.find({"admin_id": current_admin_id}))
 
-
-        user_id = request.args.get('userId', '')
-        user_name = request.args.get('userName', '')
-
-        # Access adminusersinfo from Flask's request context
-        # adminusersinfo = g.adminusersinfo
-
-        # Retrieve chat history for all users
-        all_chat_history = list(historyofchats.find())
-
-        # Get total number of user and bot messages for all users
-        total_user_messages = sum(1 for chat in all_chat_history if chat['role'] == 'user')
-        total_bot_messages = sum(1 for chat in all_chat_history if chat['role'] == 'bot')
-
+        # Calculate total user messages, bot messages, and total number of chats
+        total_user_messages = sum(1 for chat in admin_chat_history if chat['role'] == 'user')
+        total_bot_messages = sum(1 for chat in admin_chat_history if chat['role'] == 'bot')
         total_no_chats = total_user_messages + total_bot_messages
 
-        # Query to retrieve chat history for the specified user
-        user_chat_history = list(historyofchats.find({"user_id": user_id, "user_name": user_name}))
-
-        # Count the number of user and bot messages for each user
-        user_message_counts = Counter(chat['user_id'] for chat in all_chat_history if chat['role'] == 'user')
-        bot_message_counts = Counter(chat['user_id'] for chat in all_chat_history if chat['role'] == 'bot')
-
-        # Convert ObjectId to string for JSON serialization
-        for chat in all_chat_history:
-            chat['_id'] = str(chat['_id'])
-
-        # Sort user chat history based on timestamp
-        user_chat_history.sort(key=lambda x: x['timestamp'])
-
-        # Group user chat history by user name
-        user_chat_history_grouped = defaultdict(list)
-        for chat in user_chat_history:
-            user_chat_history_grouped[chat['user_name']].append(chat)
-
-        # Group all chat history by user name
-        all_chat_history_grouped = defaultdict(list)
-        for chat in all_chat_history:
-            all_chat_history_grouped[chat['user_name']].append(chat)
-
-        # Create the desired format for all_chathistory
-        formatted_all_chathistory = [
-            {
-                "user_name": user_name,
-                "user_id": all_chat_history_grouped[user_name][0]['user_id'],  # Assuming user_id is the same for all messages of a user
-                "data": [
-                    {
-                        "_id": chat['_id'],
-                        "role": chat['role'],
-                        "message": chat['message'],
-                        "timestamp": chat['timestamp']
-                    }
-                    for chat in all_chat_history_grouped[user_name]
-                ]
-            }
-            for user_name in all_chat_history_grouped
-        ]
+        # Count the number of user and bot messages
+        user_message_counts = Counter(chat['user_id'] for chat in admin_chat_history if chat['role'] == 'user')
+        bot_message_counts = Counter(chat['user_id'] for chat in admin_chat_history if chat['role'] == 'bot')
 
         # Extract day of the week from timestamp and count total chats for each day
         daywise_chat_counts = {calendar.day_name[day]: 0 for day in range(7)}  # Use day names instead of numbers
-        for chat in all_chat_history:
+        for chat in admin_chat_history:
             timestamp = datetime.strptime(chat['timestamp'], '%Y-%m-%d %H:%M:%S')
             day_of_week = timestamp.weekday()
             day_name = calendar.day_name[day_of_week]
@@ -204,28 +183,45 @@ def get_chat_history():
 
         # Extract month from timestamp and count total chats for each month
         monthwise_chat_counts = {calendar.month_name[month]: 0 for month in range(1, 13)}  # Use month names instead of numbers
-        for chat in all_chat_history:
+        for chat in admin_chat_history:
             timestamp = datetime.strptime(chat['timestamp'], '%Y-%m-%d %H:%M:%S')
             month_name = calendar.month_name[timestamp.month]
             monthwise_chat_counts[month_name] += 1
 
-        # Format the response data
-        chat_history = [
-            {"user_name": user_name, "user_chat_history": [{"chatData": chat} for chat in user_chat_history_grouped[user_name]]}
-        ]
+        # Group chat history by user name
+        user_chat_history_grouped = defaultdict(list)
+        for chat in admin_chat_history:
+            user_chat_history_grouped[chat['user_name']].append(chat)
 
+        # Create the desired format for chat history
+        formatted_chat_history = []
+        for user_name, chat_history in user_chat_history_grouped.items():
+            formatted_chat_data = [
+                {
+                    "_id": str(chat['_id']),
+                    "role": chat['role'],
+                    "message": chat['message'],
+                    "timestamp": chat['timestamp']
+                }
+                for chat in chat_history
+            ]
+            formatted_chat_history.append({
+                "user_name": user_name,
+                "user_id": chat_history[0]['user_id'],  # Assuming user_id is the same for all messages of a user
+                "data": formatted_chat_data
+            })
+
+        # Create the response data
         response_data = {
-            'total_user_messages': total_user_messages,
-            'total_bot_messages': total_bot_messages,
-            'total_no_chats': total_no_chats,
-            'user_message_counts': dict(user_message_counts),
-            'bot_message_counts': dict(bot_message_counts),
-            'all_chathistory': formatted_all_chathistory,
-            'admin_id': current_admin_id,
-            # 'chat_history': chat_history,
-            # 'userchat_history': [{"user_name": name, "user_chat_history": history} for name, history in user_chat_history_grouped.items()],
-            'daywise_chat_counts': daywise_chat_counts,
-            'monthwise_chat_counts': monthwise_chat_counts
+            "adminId": current_admin_id,
+            "total_user_messages": total_user_messages,
+            "total_bot_messages": total_bot_messages,
+            "total_no_chats": total_no_chats,
+            "user_message_counts": dict(user_message_counts),
+            "bot_message_counts": dict(bot_message_counts),
+            "daywise_chat_counts": daywise_chat_counts,
+            "monthwise_chat_counts": monthwise_chat_counts,
+            "chat_history": formatted_chat_history
         }
 
         # Serialize the response data to JSON using json_util
@@ -237,6 +233,8 @@ def get_chat_history():
         print('Error:', e)
         response_data = {'message': 'An error occurred. Please try again later.'}
         return jsonify(response_data), 500
+
+
 
 
 
@@ -269,119 +267,115 @@ def super_admin_login():
 
     superadmin = db.superadmin.find_one({'username': username})
     if superadmin and check_password_hash(superadmin['password'], password):
-        user_id = str(superadmin['_id'])
-        access_token = create_access_token(identity=user_id)
-        return jsonify(access_token=access_token), 200
-        return jsonify({'success': True, 'message': 'Login successful by server'})
+        admin_id = str(superadmin['_id'])
+        access_token = create_access_token(identity=admin_id)
+        return jsonify(access_token=access_token, adminId=admin_id), 200
     else:
-        return jsonify({'error': 'Invalid credentialsdsds','success':False ,' message':'login un successfull by server'}), 401
-        # return jsonify({'success': False, 'message': 'Login failed by server'})
-    # super_admin = db.superadmin.find_one({'username': username})
-    # if super_admin and check_password_hash(super_admin['password'], password):
-    #     access_token = create_access_token(identity=str(super_admin['_id']))
-    #     return jsonify(access_token=access_token), 200
-    # else:
-    #     return jsonify({'error': 'Invalid credentials'}), 401
-    # if username == 'superadmin' and password == 'superadminpassword':
-        
-    # else:
-    #     return jsonify({'success': False, 'message': 'Login failed by server'})
+        return jsonify({'error': 'Invalid credentials'}), 401
 
-
-# @app.route('/')
-# def index():
-#     return render_template('index.html')
+       
 
 
 
+logging.basicConfig(level=logging.DEBUG)
 
-
-
-
-
-@app.route('/admins', methods=['GET', 'POST'])
+@app.route('/admins', methods=['POST','GET'])
+@jwt_required()
 def admins():
-    if request.method == 'POST':
-        data = request.json
-        
-        existing_admin = adminusersinfo.find_one({'name': data['name']})
-        if existing_admin:
-            return jsonify({'error': 'Username already exists'}), 400
+    try:
+        if request.method == 'POST':
+            data = request.json
+            existing_admin = adminusersinfo.find_one({'name': data['name']})
+            if existing_admin:
+                return jsonify({'error': 'Username already exists'}), 400
 
-        hashed_password = generate_password_hash(data['password'])
-        new_admin = {
-            'name': data['name'],
-            'business_name': data['business_name'],
-            'logo': data['logo'],
-            'email': data['email'],
-            'phone': data['phone'],
-            'city': data['city'],
-            'pincode': data['pincode'],
-            'password': hashed_password,
-            'enabled': True
-        }
-        adminusersinfo.insert_one(new_admin)
-        return jsonify({'message': 'Admin added successfully'}), 201
+            hashed_password = generate_password_hash(data['password'])
+            new_admin = {
+                'name': data['name'],
+                'business_name': data['business_name'],
+                'logo': data['logo'],
+                'email': data['email'],
+                'phone': data['phone'],
+                'city': data['city'],
+                'pincode': data['pincode'],
+                'password': hashed_password,
+                'enabled': True
+            }
+            admin_id = adminusersinfo.insert_one(new_admin).inserted_id
 
-    elif request.method == 'GET':
-        admins = adminusersinfo.find()
-        admins_list = []
-        for admin in admins:
-            admin['_id'] = str(admin['_id'])  # Convert ObjectId to str
-            admins_list.append(admin)
-        return jsonify({'admins': admins_list}), 200
+            # Create chatbot link based on admin_id
+            chatbot_link = f"http://localhost:3000/chat/{admin_id}"
+
+            # Update the admin document to include the chatbot link
+            adminusersinfo.update_one(
+                {'_id': admin_id},
+                {'$set': {'chatbot_link': chatbot_link}}
+            )
+
+            return jsonify({
+                'message': 'Admin added successfully',
+                'admin_id': str(admin_id),
+                'chatbot_link': chatbot_link
+            }), 201
+
+        elif request.method == 'GET':
+            admins = list(adminusersinfo.find())
+            admins_list = []
+            for admin in admins:
+                admin['_id'] = str(admin['_id'])  # Convert ObjectId to str
+                admins_list.append(admin)
+
+            current_admin_id = get_jwt_identity()
+            return jsonify({'admins': admins_list, 'current_admin_id': current_admin_id}), 200
+    except Exception as e:
+        logging.error(f"Exception occurred: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
 
 @app.route('/admins/<admin_id>', methods=['GET', 'PUT', 'DELETE'])
 def admin(admin_id):
-    admin = adminusersinfo.find_one({'_id': ObjectId(admin_id)})
+    try:
+        admin = adminusersinfo.find_one({'_id': ObjectId(admin_id)})
+        if not admin:
+            return jsonify({'error': 'Admin not found'}), 404
 
-    if not admin:
-        return jsonify({'error': 'Admin not found'}), 404
+        if request.method == 'GET':
+            admin_dict = {
+                'name': admin['name'],
+                'business_name': admin['business_name'],
+                'logo': admin['logo'],
+                'email': admin['email'],
+                'phone': admin['phone'],
+                'city': admin['city'],
+                'pincode': admin['pincode'],
+                'password': admin['password'],
+                'enabled': admin['enabled']
+            }
+            return jsonify({'admin': admin_dict}), 200
 
-    admin['_id'] = str(admin['_id'])  # Convert ObjectId to str
+        elif request.method == 'PUT':
+            data = request.json
+            hashed_password = generate_password_hash(data['password'])
+            updated_admin = {
+                'name': data['name'],
+                'business_name': data['business_name'],
+                'logo': data['logo'], 
+                'email': data['email'],
+                'phone': data['phone'],
+                'city': data['city'],
+                'pincode': data['pincode'],
+                'password': hashed_password,
+            }
+            adminusersinfo.update_one({'_id': ObjectId(admin_id)}, {'$set': updated_admin})
+            return jsonify({'message': 'Admin updated successfully'}), 200
 
-    if request.method == 'GET':
-        return jsonify({'admin': admin}), 200
+        elif request.method == 'DELETE':
+            adminusersinfo.delete_one({'_id': ObjectId(admin_id)})
+            return jsonify({'message': 'Admin deleted successfully'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
-    elif request.method == 'PUT':
-        data = request.json
-        hashed_password = generate_password_hash(data['password'])
-        updated_admin = {
-            'name': data['name'],
-            'business_name': data['business_name'],
-            'logo': data['logo'], 
-            'email': data['email'],
-            'phone': data['phone'],
-            'city': data['city'],
-            'pincode': data['pincode'],
-            'password': hashed_password,
-            # 'enabled': data['enabled']
-        }
-        adminusersinfo.update_one({'_id': ObjectId(admin_id)}, {'$set': updated_admin})
-        return jsonify({'message': 'Admin updated successfully'}), 200
-
-    elif request.method == 'DELETE':
-        adminusersinfo.delete_one({'_id': ObjectId(admin_id)})
-        return jsonify({'message': 'Admin deleted successfully'}), 200
-
-# @app.route('/login', methods=['POST'])
-# def login():
-#     data = request.json
-#     username = data.get('name')
-#     password = data.get('password')
-
-#     # Query the database to find the user
-#     admin = adminusersinfo.find_one({'name': username, 'password': password})
-
-#     if admin:
-#         # If user is found, create an access token
-#         access_token = create_access_token(identity=str(admin['_id']))
-#         # Return the access token as JSON response
-#         return jsonify(access_token=access_token), 200
-#     else:
-#         # If user is not found or credentials are incorrect, return error response
-#         return jsonify({'error': 'Invalid credentials'}), 401
-#     # Replace the example with your authentication logic
 
 # Login endpoint
 @app.route('/login', methods=['POST'])
@@ -396,12 +390,13 @@ def login():
     if user and check_password_hash(user['password'], password):
         # If user is found and password matches, create an access token
         access_token = create_access_token(identity=str(user['_id']))
-        # Return the access token as JSON response
-        return jsonify(access_token=access_token), 200
+        # Return the access token and adminId as JSON response
+        return jsonify(access_token=access_token, adminId=str(user['_id'])), 200
     else:
         # If user is not found or credentials are incorrect, return error response
         return jsonify({'error': 'Invalid credentials'}), 401
 
+# Protected route example
 # Protected route example
 @app.route('/protected', methods=['GET'])
 @jwt_required()
@@ -409,6 +404,7 @@ def protected():
     # Access the identity of the current user with get_jwt_identity
     current_user = get_jwt_identity()
     return jsonify(logged_in_as=current_user), 200
+
 
 
 def get_next_product_id():
@@ -466,38 +462,7 @@ def add_bulk_products():
     productdetail.insert_many(new_products)
     return jsonify({"message": "Bulk products added successfully"}), 201
 
-# @app.route('/admin/profile', methods=['POST'])
-# def update_user_stats(Name,Business_Name,Email,Phone,City,PinCode,Password,Confirm_Password,):
-#     # Create a document to insert into the collection
-#     data = request.get_json()
-#     stats = data.get('stats')
-#     stats = {
-#         "timestamp": datetime.now(),
-#         "Name": Name,
-#         "Business_Name": Business_Name,
-#         "Email_id": Email,
-#         "Phone_Number": Phone,
-#         "City ": City,
-#         "PinCode ": PinCode,
-#         "Password ": Password,
-#         "Confirm_Password ": Confirm_Password,
-#     }
-#     # Insert the document into the collection
-#     profile_info.insert_one(stats)
-#     print("User statistics updated.")
 
-# def main():
-#     # Example usage to update user statistics
-#     Name = input("Enter your Name : ")
-#     Business_Name = input("Enter Your Business name : ")
-#     Email = input("Enter your Email is : ")
-#     Phone = int(input("Enter your phone number : "))
-#     City = input("Enter your City : ")
-#     PinCode = int(input("Enter your PinCode : "))
-#     Password = input("Enter your Password : ")
-#     Confirm_Password = input("Enter your confirm Password :")
-
-#     update_user_stats(Name,Business_Name,Email,Phone,City,PinCode,Password,Confirm_Password)
 
 
 if __name__ == '__main__':

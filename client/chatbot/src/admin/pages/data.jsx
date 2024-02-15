@@ -38,7 +38,7 @@ const ProductTable = () => {
   const displayProducts = products
     .slice(pagesVisited, pagesVisited + productsPerPage)
     .map((product) => (
-      <tr className="hover:bg-gray-100 grid grid-cols-9  w-full text-xs " key={product.id}>
+      <tr className="hover:bg-gray-100 grid grid-cols-9  w-full text-xs " key={product.productName}>
         <td className="p-2 text-center ">{product.id}</td>
         <td className="p-2 text-center col-span-2">
           {editedProduct && editedProduct.id === product.id ? (
@@ -55,6 +55,7 @@ const ProductTable = () => {
             />
           ) : (
             product.productName
+            
           )}
         </td>
         <td className="p-2 text-center col-span-2">
