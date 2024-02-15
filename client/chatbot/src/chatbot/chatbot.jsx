@@ -29,7 +29,7 @@ const Chat = () => {
     const fetchChatbotLinks = async () => {
       // console.log('token>>>>>>>>><<<<<<<<<<', );
       try {
-        const response = await fetch('http://localhost:8000/admins', {
+        const response = await fetch('https://chatbotserver1.onrender.com/admins', {
           method: 'GET',
           headers: {
             Accept: 'application/json',
@@ -119,7 +119,7 @@ const Chat = () => {
 
 
       const response = await axios.post(
-        `http://localhost:8000/chat?q=${encodeURIComponent(newMessage)}&admin_id=${adminId}`,
+        `https://chatbotserver1.onrender.com/chat?q=${encodeURIComponent(newMessage)}&admin_id=${adminId}`,
         { message: newMessage, userId: userId, userName: userName }
         
       );

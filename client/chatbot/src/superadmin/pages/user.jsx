@@ -57,7 +57,7 @@ const User = () => {
 
   const fetchAdmins = useCallback(async () => {
     try {
-      const response = await fetch('http://localhost:8000/admins', {
+      const response = await fetch('https://chatbotserver1.onrender.com/admins', {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -87,7 +87,7 @@ const User = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:8000/admins', {
+      const response = await fetch('https://chatbotserver1.onrender.com/admins', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -140,7 +140,7 @@ const User = () => {
   };
   const handleUpdateAdmin = async (adminId) => {
     try {
-      const response = await fetch(`http://localhost:8000/admins/${adminId}`, {
+      const response = await fetch(`https://chatbotserver1.onrender.com/admins/${adminId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
