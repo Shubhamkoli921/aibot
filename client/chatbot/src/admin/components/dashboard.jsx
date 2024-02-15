@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import Data from "../pages/data";
 import Profile from "../pages/profile";
 import DashboardCom from "../pages/dashboardcom";
-import Chats from "../../chatbot/chatbot";
+// import Chats from "../../chatbot/chatbot";
 import Chat from "../pages/chat";
 
 const AdminDashBoard = ({ token, adminId }) => {

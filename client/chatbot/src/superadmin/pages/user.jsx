@@ -4,7 +4,7 @@ import { MdEdit } from "react-icons/md";
 import { FcFullTrash, FcRules } from "react-icons/fc";
 import { connect } from 'react-redux';
 import Modal from "react-modal";
-import {  useSelector } from 'react-redux';
+// import {  useSelector } from 'react-redux';
 import '../css/style.css'
 import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch } from 'react-redux';
@@ -19,7 +19,7 @@ const User = () => {
   const token = location.state ? location.state.token : '';
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const chatbotLink = useSelector((state) => state.chatbotLink);
+  // const chatbotLink = useSelector((state) => state.chatbotLink);
   const [content, setContent] = useState('ShowUser');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [admins, setAdmins] = useState([]);
@@ -72,7 +72,7 @@ const User = () => {
     } catch (error) {
       console.error('Error fetching admins:', error);
     }
-  }, [token]);
+  }, [token,dispatch,formData]);
 
   useEffect(() => {
     if (token) {

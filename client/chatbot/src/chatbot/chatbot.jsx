@@ -3,7 +3,7 @@ import png from '../../src/admin/assets/chatbot.png';
 import sci from '../../src/admin/assets/science (1).png';
 import axios from "axios";
 import { connect } from 'react-redux';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { useNavigate, useParams } from "react-router-dom";
 import { updateChatbotLink } from '../state/action';
 // import { updateToken } from '../state/action';
@@ -18,7 +18,7 @@ const Chat = () => {
   const { adminId } = useParams(); // Get adminId from URL params
   const dispatch = useDispatch(); // Initialize dispatch function
 
-  const chatbotLinks = useSelector(state => state.chatbotLinks);
+  // const chatbotLinks = useSelector(state => state.chatbotLinks);
 
   const navigate = useNavigate();
 
