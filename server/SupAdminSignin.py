@@ -353,7 +353,7 @@ def add_admin():
         admin_id = adminusersinfo.insert_one(new_admin).inserted_id
 
         # Create chatbot link based on admin_id
-        chatbot_link = f"https://thriving-druid-e4eeab.netlify.app/chat/{admin_id}"
+        chatbot_link = f"https://cdeploye-p9e5bjt9m-shubhamkoli921s-projects.vercel.app/chat/{admin_id}"
 
         # Update the admin document to include the chatbot link
         adminusersinfo.update_one(
