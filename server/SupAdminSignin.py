@@ -6,12 +6,15 @@ from flask_cors import CORS
 from flask_jwt_extended import create_access_token, JWTManager
 from pymongo import MongoClient
 from werkzeug.security import check_password_hash, generate_password_hash
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask_pymongo import PyMongo
 from bson import ObjectId
 from bson import json_util
 from collections import defaultdict
+# from collections import defaultdict
 import logging
+from nltk.tokenize import word_tokenize
+from nltk.stem import WordNetLemmatizer
 
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
@@ -101,6 +104,12 @@ def chat():
             user_name = request.json.get('userName', '')
             admin_id = g.admin_id
 
+            # Lemmatize user query
+            lemmatized_query = lemmatize_query(user_query)
+
+            # Process lemmatized query and generate response
+            bot_response = generate_bot_response(lemmatized_query, user_id, user_name, admin_id)
+
             # Insert user's message into the database
             chat_history_user = {
                 "user_id": user_id,
@@ -110,10 +119,7 @@ def chat():
                 "message": user_query,
                 "timestamp": get_current_timestamp()
             }
-            demochats.insert_one(chat_history_user)
-
-            # Generate bot's response
-            bot_response = generate_bot_response(user_query, user_id, user_name, admin_id)
+            demochats.append(chat_history_user)
 
             # Format bot's response including user's message
             bot_response_with_user_message = f"\n{bot_response}"
@@ -127,27 +133,98 @@ def chat():
                 "message": bot_response_with_user_message,
                 "timestamp": get_current_timestamp()
             }
-            demochats.insert_one(chat_history_bot)
+            demochats.append(chat_history_bot)
 
-            # Format bot response as JSON
-            bot_response_json = jsonify({
-                'message': bot_response_with_user_message,
-                'admin_id': admin_id
-            })
-
-            return bot_response_json, 200
+            return jsonify({'message': bot_response_with_user_message, 'admin_id': admin_id}), 200
         except Exception as e:
             print('Error:', e)
             response_data = {'message': 'An error occurred. Please try again later.'}
             return jsonify(response_data), 500
 
+def lemmatize_query(user_query):
+    # Tokenize query
+    tokens = word_tokenize(user_query)
+    # Lemmatize tokens
+    lemmatized_tokens = [lemmatizer.lemmatize(token) for token in tokens]
+    # Reconstruct query
+    lemmatized_query = ' '.join(lemmatized_tokens)
+    return lemmatized_query
+
 def generate_bot_response(user_query, user_id, user_name, admin_id):
     if 'product details' in user_query:
         return get_product_details_response()
     elif 'below' in user_query and any(char.isdigit() for char in user_query):
-        return get_products_below_price_response(user_query)
+        min_price, _ = extract_price(user_query)    
+        return get_products_below_price_response(min_price)
+    elif 'above' in user_query and any(char.isdigit() for char in user_query):
+        max_price, _ = extract_price(user_query)
+        return get_products_above_price_response(max_price)
+    elif 'description' in user_query:
+        return get_product_description_response(user_query)
+    elif 'range' in user_query:
+        min_price, max_price = extract_price_range(user_query)
+        return get_products_in_price_range_response(min_price, max_price)
+    elif 'specific price' in user_query:
+        return get_specific_product_price_response(user_query)
+    elif 'budget' in user_query:
+        return suggest_products_based_on_budget(user_query)
     else:
         return get_products_by_name_response(user_query)
+
+def get_product_description_response(user_query):
+    product_name = extract_product_name(user_query)
+    if product_name:
+        product = find_product_by_name(product_name)
+        if product:
+            return product['description']
+        else:
+            return "Product not found."
+    else:
+        return "Please specify the product name."
+
+def get_products_above_price_response(user_query):
+    min_price = extract_price(user_query)
+    if min_price:
+        search_results = search_products_above_price(min_price)
+        if search_results:
+            return format_product_details(search_results)
+        else:
+            return "No products found above the specified price."
+    else:
+        return "Please specify a valid price to search for products above."
+
+def get_products_in_price_range_response(user_query):
+    min_price, max_price = extract_price_range(user_query)
+    if min_price is not None and max_price is not None:
+        search_results = search_products_in_price_range(min_price, max_price)
+        if search_results:
+            return format_product_details(search_results)
+        else:
+            return "No products found in the specified price range."
+    else:
+        return "Please specify a valid price range."
+
+def get_specific_product_price_response(user_query):
+    product_name = extract_product_name(user_query)
+    if product_name:
+        product = find_product_by_name(product_name)
+        if product:
+            return f"The price of {product_name} is {product['price']}"
+        else:
+            return "Product not found."
+    else:
+        return "Please specify the product name."
+        
+def suggest_products_based_on_budget(user_query):
+    budget = extract_budget(user_query)
+    if budget:
+        search_results = search_products_within_budget(budget)
+        if search_results:
+            return format_product_details(search_results)
+        else:
+            return "No products found within your budget."
+    else:
+        return "Please specify a valid budget."
 
 def get_product_details_response():
     search_results = get_all_products()
@@ -171,12 +248,19 @@ def get_products_by_name_response(user_query):
     else:
         return "No products found matching your search criteria."
 
-def extract_price(query):
+def extract_price(user_query):
     try:
-        price_str = query.split('below')[-1].strip()
-        return float(price_str)
+        # Check for 'below' or 'above' in the query
+        if 'below' in query:
+            price_str = query.split('below')[-1].strip()
+            return float(price_str), 'below'
+        elif 'above' in query:
+            price_str = query.split('above')[-1].strip()
+            return float(price_str), 'above'
+        else:
+            return None, None
     except ValueError:
-        return None
+        return None, None
 
 def format_product_details(products):
     if products:
@@ -213,7 +297,8 @@ def search_products_by_price(user_query, min_price, max_price):
     matching_products = productdetail.find(query)
     products_list = list(matching_products)
     return products_list
-    
+
+
 @app.route('/chat/history', methods=['GET'])
 @jwt_required()
 def get_chat_history():
@@ -221,6 +306,8 @@ def get_chat_history():
         current_admin_id = get_jwt_identity()
         admin_chat_history = list(demochats.find({"admin_id": current_admin_id}))
 
+        # admins = adminusersinfo.find({}, {'_id': 1, 'name': 1})
+        
         total_user_messages = sum(1 for chat in admin_chat_history if chat['role'] == 'user')
         total_bot_messages = sum(1 for chat in admin_chat_history if chat['role'] == 'bot')
         total_no_chats = total_user_messages + total_bot_messages
@@ -245,6 +332,14 @@ def get_chat_history():
         for chat in admin_chat_history:
             user_chat_history_grouped[chat['user_name']].append(chat)
 
+        # admin_chat_histories = {}
+        # for admin in admins:
+        #     admin_id = str(admin['_id'])
+        #     admin_name = admin['name']
+                
+        #     # Retrieve chat history for the current admin
+        #     # admin_chat_history = list(demochats.find({"admin_id": admin_id}))
+
         formatted_chat_history = []
         for user_name, chat_history in user_chat_history_grouped.items():
             formatted_chat_data = [
@@ -262,6 +357,33 @@ def get_chat_history():
                 "data": formatted_chat_data
             })
 
+        # user_chat_counts = {}
+        # for chat in admin_chat_history:
+        #     user_id = chat['user_id']
+        #     if user_id in user_chat_counts:
+        #         user_chat_counts[user_id] += 1
+        #     else:
+        #         user_chat_counts[user_id] = 1
+
+
+        admins_chat_history = {}  # Define a dictionary to hold admin chat histories
+
+        admins = adminusersinfo.find({}, {'_id': 1, 'name': 1})  # Retrieve all admin IDs and names
+        for admin in admins:
+            admin_id = str(admin['_id'])
+            admin_name = admin['name']
+            chat_history = list(demochats.find({"admin_id": admin_id}))
+            admins_chat_history[admin_name] = chat_history
+
+        # admin_chat_histories[admin_id] = {
+        #         "admin_name": admin_name,
+        #         "chat_history": formatted_chat_history
+        #     }
+
+        
+
+       
+
         response_data = {
             "adminId": current_admin_id,
             "total_user_messages": total_user_messages,
@@ -271,7 +393,11 @@ def get_chat_history():
             "bot_message_counts": dict(bot_message_counts),
             "daywise_chat_counts": daywise_chat_counts,
             "monthwise_chat_counts": monthwise_chat_counts,
-            "chat_history": formatted_chat_history
+            "chat_history": formatted_chat_history,
+            # 'user_chat_counts': user_chat_counts,
+            # 'counts':admin_chat_history,
+            # 'alladminchats':admin_chat_histories,
+            
         }
 
         # Serialize the response data to JSON using json_util
@@ -285,6 +411,105 @@ def get_chat_history():
         return jsonify(response_data), 500
 
 
+
+@app.route('/chat/stats', methods=['GET'])
+@jwt_required()
+def get_admin_stats():
+    try:
+        admins = adminusersinfo.find({}, {'_id': 1, 'name': 1})  # Retrieve all admin IDs and names
+
+        total_num_users = 0
+        total_today_chats = 0
+        total_total_chats = 0
+
+        admin_stats = {}
+        daywise_chat_counts = defaultdict(int)
+        monthwise_chat_counts = defaultdict(int)
+        monthwise_user_counts = defaultdict(set)  # Use set to count unique users per month
+
+        for admin in admins:
+            admin_id = str(admin['_id'])
+            admin_name = admin['name']
+
+            # Retrieve chat history for the current admin
+            admin_chat_history = list(demochats.find({"admin_id": admin_id}))
+
+            # Calculate the number of users
+            users = set(chat['user_id'] for chat in admin_chat_history)
+            num_users = len(users)
+            total_num_users += num_users
+
+            # Calculate the total number of chats
+            total_chats = len(admin_chat_history)
+            total_total_chats += total_chats
+
+            # Calculate today's current chats
+            today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            today_chats = [chat for chat in admin_chat_history if datetime.strptime(
+                chat['timestamp'], '%Y-%m-%d %H:%M:%S') >= today]
+            num_today_chats = len(today_chats)
+            total_today_chats += num_today_chats
+
+            # Update day-wise, month-wise chat counts, and month-wise user counts
+            for chat in admin_chat_history:
+                timestamp = datetime.strptime(chat['timestamp'], '%Y-%m-%d %H:%M:%S')
+                day_name = calendar.day_name[timestamp.weekday()]
+                month_name = calendar.month_name[timestamp.month]
+
+                daywise_chat_counts[day_name] += 1
+                monthwise_chat_counts[month_name] += 1
+                monthwise_user_counts[month_name].add(chat['user_id'])  # Add user to the set
+
+            admin_stats[admin_name] = {
+                'admin_id': admin_id,
+                'num_users': num_users,
+                'total_chats': total_chats,
+                'today_chats': num_today_chats
+            }
+
+        # Create a separate entity for totals and chat counts in the response
+        totals = {
+            'num_users': total_num_users,
+            'total_chats': total_total_chats,
+            'today_chats': total_today_chats
+        }
+
+        # Convert defaultdicts to regular dictionaries for JSON serialization
+        daywise_chat_counts = dict(daywise_chat_counts)
+        monthwise_chat_counts = dict(monthwise_chat_counts)
+        
+        # Calculate number of users per month
+        for month in monthwise_user_counts:
+            monthwise_user_counts[month] = len(monthwise_user_counts[month])
+
+        # Ensure that all days and months are present in the response
+        all_days = list(calendar.day_name)
+        all_months = list(calendar.month_name)
+
+        for day in all_days:
+            if day not in daywise_chat_counts:
+                daywise_chat_counts[day] = 0
+
+        for month in all_months:
+            if month not in monthwise_chat_counts:
+                monthwise_chat_counts[month] = 0
+            if month not in monthwise_user_counts:
+                monthwise_user_counts[month] = 0
+
+        response_data = {
+            'admin_stats': admin_stats,
+            'daywise_chat_counts': daywise_chat_counts,
+            'monthwise_chat_counts': monthwise_chat_counts,
+            'monthwise_user_counts': monthwise_user_counts,
+            'totals': totals
+        }
+
+        return jsonify(response_data), 200
+
+    except Exception as e:
+        print('Error:', e)
+        response_data = {'message': 'An error occurred. Please try again later.'}
+        return jsonify(response_data), 500
 
 
 
@@ -353,18 +578,21 @@ def add_admin():
         admin_id = adminusersinfo.insert_one(new_admin).inserted_id
 
         # Create chatbot link based on admin_id
-        chatbot_link = f"https://cdeploye-p9e5bjt9m-shubhamkoli921s-projects.vercel.app/chat/{admin_id}"
+        chatbot_link = f"https://cdeploye.vercel.app/chat/{admin_id}"
 
         # Update the admin document to include the chatbot link
         adminusersinfo.update_one(
             {'_id': admin_id},
             {'$set': {'chatbot_link': chatbot_link}}
         )
+        
+        total_admins = adminusersinfo.count_documents({})
 
         return jsonify({
             'message': 'Admin added successfully',
             'admin_id': str(admin_id),
-            'chatbot_link': chatbot_link
+            'chatbot_link': chatbot_link,
+            'total_admins': total_admins
         }), 201
     except Exception as e:
         logging.error(f"Exception occurred: {str(e)}")
@@ -472,6 +700,68 @@ def add_bulk_products():
     return jsonify({"message": "Bulk products added successfully"}), 201
 
 
+@app.route('/chat/statss', methods=['GET'])
+def get_admin_statss():
+    try:
+        admins = adminusersinfo.find({}, {'_id': 1, 'name': 1})  # Retrieve all admin IDs and names
+        total_num_users = 0
+        total_today_chats = 0
+        total_total_chats = 0
+        admin_stats = {}
+        monthly_total_chats = defaultdict(int)
+        monthly_num_users = defaultdict(int)
+        daily_today_chats = defaultdict(int)
+        # Initialize monthly dictionaries with correct month names
+        for month in range(1, 13):
+            month_name = calendar.month_name[month]
+            monthly_total_chats[month_name] = 0
+            monthly_num_users[month_name] = 0
+        # Initialize daily dictionary with correct day names
+        for day_index, day_name in enumerate(calendar.day_name):
+            daily_today_chats[day_name] = 0
+        for admin in admins:
+            admin_id = str(admin['_id'])
+            admin_name = admin['name']
+            admin_chat_history = list(demochats.find({"admin_id": admin_id}))
+            users = set(chat['user_id'] for chat in admin_chat_history)
+            num_users = len(users)
+            total_num_users += num_users
+            current_month = datetime.now().strftime('%B')
+            current_day = datetime.now().strftime('%A')
+            monthly_num_users[current_month] += num_users
+            today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            today_chats = [chat for chat in admin_chat_history if datetime.strptime(chat['timestamp'], '%Y-%m-%d %H:%M:%S') >= today]
+            num_today_chats = len(today_chats)
+            total_today_chats += num_today_chats
+            daily_today_chats[current_day] += num_today_chats
+            for chat in admin_chat_history:
+                chat_month = datetime.strptime(chat['timestamp'], '%Y-%m-%d %H:%M:%S').strftime('%B')
+                monthly_total_chats[chat_month] += 1
+            total_chats = len(admin_chat_history)
+            total_total_chats += total_chats
+            admin_stats[admin_name] = {
+                'admin_id': admin_id,
+                'num_users': num_users,
+                'total_chats': total_chats,
+                'today_chats': num_today_chats
+            }
+        # No need to sort monthly and daily dictionaries
+        # Adding totals to the admin stats
+        admin_stats['Insights'] = {
+            'num_users': monthly_num_users,
+            'total_chats': monthly_total_chats,
+            'today_chats': daily_today_chats
+        }
+        admin_stats['totals'] = {
+            'num_users': total_num_users,
+            'total_chats': total_total_chats,
+            'today_chats': total_today_chats
+        }
+        return jsonify(admin_stats), 200
+    except Exception as e:
+        print('Error:', e)
+        response_data = {'message': 'An error occurred. Please try again later.'}
+        return jsonify(response_data), 500
 
 
 if __name__ == '__main__':

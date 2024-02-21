@@ -1,10 +1,10 @@
 // Dashboard.js
 
 import React, { useState } from 'react';
-import { MdDashboard } from "react-icons/md";
-import { LuUsers } from "react-icons/lu";
-import { ImProfile } from "react-icons/im";
-import { TbReportSearch, TbLogout2 } from "react-icons/tb";
+// import { MdDashboard } from "react-icons/md";
+// import { LuUsers } from "react-icons/lu";
+// import { ImProfile } from "react-icons/im";
+// import { TbReportSearch, TbLogout2 } from "react-icons/tb";
 import DashBoardData from '../pages/dashboardData';
 import Profiles from '../pages/Profiles';
 import User from '../pages/user';
