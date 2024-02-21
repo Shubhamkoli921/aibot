@@ -13,9 +13,9 @@ from bson import json_util
 from collections import defaultdict
 # from collections import defaultdict
 import logging
+import nltk
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
-import nltk
 nltk.download('punkt')
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
