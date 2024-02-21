@@ -11,7 +11,7 @@ from flask_pymongo import PyMongo
 from bson import ObjectId
 from bson import json_util
 from collections import defaultdict
-# from collections import defaultdict
+
 import logging
 import nltk
 from nltk.tokenize import word_tokenize
