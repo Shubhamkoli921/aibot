@@ -24,6 +24,35 @@ const Chat = () => {
 
 
 
+  const parseMessageText = (text) => {
+    // Check if the text is a valid JSON string
+    try {
+      const jsonData = JSON.parse(text);
+      // If parsing succeeds, check if it's an array and render accordingly
+      if (Array.isArray(jsonData)) {
+        return (
+          <ul>
+            {jsonData.map((item, index) => (
+              <li key={index}>
+                <strong>Product Name:</strong> {item.productName}, <strong>Price:</strong> {item.price}, <strong>Description:</strong> {item.description}
+              </li>
+            ))}
+          </ul>
+        );
+      } else {
+        // If it's not an array, render the text as is
+        return text;
+      }
+    } catch (error) {
+      // If parsing fails, render the text as is
+      return text;
+    }
+  };
+  
+  
+  
+  
+  
   
   useEffect(() => {
     const fetchChatbotLinks = async () => {
@@ -209,7 +238,7 @@ const Chat = () => {
                 </div>
               )}
               <div className={`p-2 w-full flex flex-col ml-2 rounded-lg ${getBackgroundColor(message)}`}>
-                <span className="w-full inline-flex ">{message.text}</span>
+                <span className="w-full inline-flex ">{parseMessageText(message.text)}</span>
                 <span className="text-xs">{message.time}</span>
               </div>
             </div>

@@ -23,13 +23,13 @@ const ProductTable = () => {
   }
 
 
-  const initialProducts = [
-    { id: 1, productName: "Product A", price: 20.99, description: "Description for Product A" },
-    { id: 2, productName: "Product B", price: 15.49, description: "Description for Product B" },
-    { id: 3, productName: "Product C", price: 30.00, description: "Description for Product C" },
-  ];
+  // const initialProducts = [
+  //   { id: 1, productName: "Product A", price: 20.99, description: "Description for Product A" },
+  //   { id: 2, productName: "Product B", price: 15.49, description: "Description for Product B" },
+  //   { id: 3, productName: "Product C", price: 30.00, description: "Description for Product C" },
+  // ];
 
-  const [products, setProducts] = useState(initialProducts);
+  const [products, setProducts] = useState([]);
   const [editedProduct, setEditedProduct] = useState(null);
   const [newProduct, setNewProduct] = useState({ productName: "", price: 0, description: "" });
 
@@ -178,7 +178,7 @@ const ProductTable = () => {
       })
       .catch(error => console.error("Error adding product:", error));
 
-    setNewProduct({ productName: "", price: 0, description: "" });
+    setNewProduct({ productName: " ", price: " ", description: " " });
   };
 
   const handleFileUpload = (event) => {

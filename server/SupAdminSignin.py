@@ -130,27 +130,14 @@ def chat():
             }
             demochats.insert_one(chat_history_bot)
 
-            # Format bot response as JSON
-            bot_response_json = jsonify({
-                'message': bot_response_with_user_message,
-                'admin_id': admin_id
-            })
-
-            return bot_response_json, 200
+            # Return the formatted bot response
+            return bot_response, 200
         except Exception as e:
             print('Error:', e)
             response_data = {'message': 'An error occurred. Please try again later.'}
             return jsonify(response_data), 500
 
-# def generate_bot_response(user_query, user_id, user_name, admin_id):
-#     if 'product details' in user_query:
-#         return get_product_details_response()
-#     elif 'below' in user_query and any(char.isdigit() for char in user_query):
-#         return get_products_below_price_response(user_query)
-#     elif 'above' in user_query and any(char.isdigit() for char in user_query):
-#         return get_products_above_price_response(user_query)
-#     else:
-#         return get_products_by_name_response(user_query)
+
 def generate_bot_response(user_query, user_id, user_name, admin_id):
     if 'product details' in user_query:
         return get_product_details_response()
@@ -164,13 +151,23 @@ def generate_bot_response(user_query, user_id, user_name, admin_id):
         min_price, max_price = extract_price_range(user_query)
         return get_products_in_price_range_response(min_price, max_price)
     elif 'specific price' in user_query:
-        return get_products_by_specific_price_response(user_query)  # Corrected function name
+        return get_products_by_specific_price_response(user_query)
     elif 'price is' in user_query and any(char.isdigit() for char in user_query):
         price = extract_specific_price(user_query)
-        return get_products_by_specific_price_response(price)  # Corrected function name
+        return get_products_by_specific_price_response(price)
     else:
         return get_products_by_name_response(user_query)
 
+
+def format_product_details(products):
+    if products:
+        formatted_results = []
+        for i, product in enumerate(products, start=1):
+            formatted_product = f"{i}. Product Name: {product['productName']}, Price: {product['price']}, Description: {product['description']}"
+            formatted_results.append(formatted_product)
+        return "\n".join(formatted_results)
+    else:
+        return "No products found."
 
 
 def get_product_details_response():
@@ -366,6 +363,16 @@ def search_products_by_price(user_query, min_price, max_price):
     products_list = list(matching_products)
     return products_list
 
+
+def format_product_details(products):
+    if products:
+        formatted_results = []
+        for i, product in enumerate(products, start=1):
+            formatted_product = f"{i}. a. Product Name: {product['productName']}\n   b. Price: {product['price']}\n   c. Description: {product['description']}"
+            formatted_results.append(formatted_product)
+        return "\n".join(formatted_results)
+    else:
+        return "No products found."
 
 @app.route('/chat/history', methods=['GET'])
 @jwt_required()
