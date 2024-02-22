@@ -6,114 +6,96 @@ import { connect } from 'react-redux';
 import { useDispatch } from 'react-redux';
 import { useNavigate, useParams } from "react-router-dom";
 import { updateChatbotLink } from '../state/action';
-// import { updateToken } from '../state/action';
-// import { selectChatbotLinks } from '../state/selector'
 
 const Chat = () => {
+  // State variables
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [userName, setUserName] = useState('');
   const [userId, setUserId] = useState('');
-  const { adminId } = useParams(); // Get adminId from URL params
-  const dispatch = useDispatch(); // Initialize dispatch function
 
-  // const chatbotLinks = useSelector(state => state.chatbotLinks);
-
+  // Hooks
+  const { adminId } = useParams();
+  const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  // Component lifecycle methods
+  useEffect(() => {
+    fetchChatbotLinks();
+  }, [dispatch, navigate, adminId]);
+
+  // Fetch chatbot links
 
 
-  const parseMessageText = (text) => {
-    // Check if the text is a valid JSON string
+  // const parseMessageText = (text) => {
+  //   try {
+  //     const jsonData = JSON.parse(text);
+
+  //     if (Array.isArray(jsonData)) {
+  //       return (
+  //         <ul>
+  //           {jsonData.map((item, index) => (
+  //             <li key={index}>
+  //               <strong>Product Name:</strong> {item.productName}, <strong>Price:</strong> {item.price}, <strong>Description:</strong> {item.description}
+  //             </li>
+  //           ))}
+  //         </ul>
+  //       );
+  //     } else {
+  //       return <div>{text}</div>; // Render the text as is if it's not an array
+  //     }
+  //   } catch (error) {
+  //     return <div>{text}</div>; // Render the text as is if there's an error parsing it
+  //   }
+  // };
+
+
+  const fetchChatbotLinks = async () => {
     try {
-      const jsonData = JSON.parse(text);
-      // If parsing succeeds, check if it's an array and render accordingly
-      if (Array.isArray(jsonData)) {
-        return (
-          <ul>
-            {jsonData.map((item, index) => (
-              <li key={index}>
-                <strong>Product Name:</strong> {item.productName}, <strong>Price:</strong> {item.price}, <strong>Description:</strong> {item.description}
-              </li>
-            ))}
-          </ul>
-        );
+      const response = await fetch('https://chatbotserver1.onrender.com/admins', {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch admins');
+      }
+
+      const resData = await response.json();
+      const chatbotLinks = resData.admins.reduce((acc, admin) => {
+        acc[admin._id] = admin.chatbot_link;
+        return acc;
+      }, {});
+
+      dispatch(updateChatbotLink(chatbotLinks));
+
+      const chatbotLink = chatbotLinks[adminId];
+      if (!chatbotLink) {
+        navigate('/error');
       } else {
-        // If it's not an array, render the text as is
-        return text;
+        let chatbotWindow = window.open(chatbotLink, '_blank');
+        if (chatbotWindow) {
+          chatbotWindow.focus();
+        } else {
+          console.error('Unable to open chatbot window');
+        }
       }
     } catch (error) {
-      // If parsing fails, render the text as is
-      return text;
+      console.error(error);
+      navigate('/error');
     }
   };
-  
-  
-  
-  
-  
-  
-  useEffect(() => {
-    const fetchChatbotLinks = async () => {
-      // console.log('token>>>>>>>>><<<<<<<<<<', );
-      try {
-        const response = await fetch('https://chatbotserver1.onrender.com/admins', {
-          method: 'GET',
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-            // Authorization: `Bearer ${token}`,
-          },
-        });
-  
-        if (!response.ok) {
-          throw new Error('Failed to fetch admins');
-        }
-  
-        const resData = await response.json();
-        console.log('resData>>>>>>>>>>>>>>>>>>>>>>>>>>>>', resData.admins);
-        // Extract chatbot links from the data
-        const chatbotLinks = resData.admins.reduce((acc, admin) => {
-          acc[admin._id] = admin.chatbot_link;
-          console.log("link>>>>>>",acc);
-          return acc;
-        }, {});
-  
-        // Update the chatbotLinks state with the extracted links
-        dispatch(updateChatbotLink(chatbotLinks));
-  
-        // Check if the chatbot link for the current adminId exists and redirect
-        const chatbotLink = chatbotLinks[adminId];
-        if (!chatbotLink) {
-          // Handle error or redirect to an error page
-          navigate('/error');
-        } else {
-          // Check if the window is already open
-          let chatbotWindow = window.open(chatbotLink, '_blank');
-          if (chatbotWindow) {
-            chatbotWindow.focus();
-          } else {
-            // Handle window blocked by browser or other issues
-            console.error('Unable to open chatbot window');
-          }
-        }
-        
-      } catch (error) {
-        console.error(error);
-        navigate('/error');
-      }
-    };
-  
-    fetchChatbotLinks();
-  }, [dispatch, navigate, adminId ]);
-  
 
+  // Send message
   const handleSendMessage = async () => {
     try {
+      // Handling user name
       if (userName === '') {
         const isNameMessage = newMessage.trim().toLowerCase().includes('my name is');
-
         if (isNameMessage) {
           const extractedName = newMessage.trim().toLowerCase().replace('my name is', '').trim();
           setUserName(extractedName);
@@ -134,6 +116,7 @@ const Chat = () => {
         }
       }
 
+      // Send message to server
       const currentTime = getTime();
       setMessages((prevMessages) => [
         ...prevMessages,
@@ -146,13 +129,10 @@ const Chat = () => {
       ]);
       setLoading(true);
 
-
       const response = await axios.post(
         `https://chatbotserver1.onrender.com/chat?q=${encodeURIComponent(newMessage)}&admin_id=${adminId}`,
         { message: newMessage, userId: userId, userName: userName }
-        
       );
-      
 
       if (!response.data) {
         throw new Error('Empty response');
@@ -180,6 +160,7 @@ const Chat = () => {
     }
   };
 
+  // Other helper functions
   const getTime = () => {
     const now = new Date();
     const hours = now.getHours().toString().padStart(2, '0');
@@ -198,7 +179,7 @@ const Chat = () => {
   };
 
   const getBackgroundColor = (message) => {
-    if (message.sender === 'bot') {
+    if (message && message.text) {
       if (message.text.includes('Error')) {
         return 'bg-red-300';
       } else if (message.text.includes('Recommendation')) {
@@ -210,8 +191,11 @@ const Chat = () => {
     }
   };
 
+
+  // Rendering
   return (
     <div className="flex flex-col h-screen">
+      {/* Header */}
       <div className="p-5 gap-4 bg-gradient-to-tr from-blue-500 to-indigo-500 flex">
         <div className="w-[60px] flex justify-center items-center h-[60px]">
           <img className="w-full" src={png} alt="img" />
@@ -221,24 +205,39 @@ const Chat = () => {
           <span>i'm here to help, so if you have any question, go ahead and ask me!</span>
         </div>
       </div>
+      {/* Chat container */}
+      {/* // Inside the Chat component's return statement */}
       <div id="chat-container" className="flex-1 overflow-y-auto bg-slate-100 p-4">
         {messages.map((message, index) => (
-          <div
-            key={index}
-            className={`mb-2 flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
+          <div key={index} className={`mb-2 flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className="w-auto flex">
               {message.sender === 'bot' && (
                 <div className="flex items-center justify-center w-10 h-10">
-                  <img
-                    src={sci}
-                    alt="Chatbot Logo"
-                    className="h-7 w-7"
-                  />
+                  <img src={sci} alt="Chatbot Logo" className="h-7 w-7" />
                 </div>
               )}
-              <div className={`p-2 w-full flex flex-col ml-2 rounded-lg ${getBackgroundColor(message)}`}>
-                <span className="w-full inline-flex ">{parseMessageText(message.text)}</span>
+              <div className={`p-2 w-full flex flex-col ml-2 rounded-lg ${message.sender === 'user' ? 'bg-white text-black' : getBackgroundColor(message)}`}>
+                {/* Check if message.text is an array of objects */}
+                {Array.isArray(message.text) ? (
+                  // Render each product's details
+                  message.text.map((product, idx) => (
+                    <div className="flex" key={idx}>
+                      <div>
+                        {product.Number}.
+                      </div>
+                      <div>
+                        <p><strong>Product Name:</strong> {product.ProductName}</p>
+                        <p><strong>Price:</strong> {product.Price}</p>
+                        <p><strong>Description:</strong> {product.Description}</p>
+                        <br />
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  // Render message.text as is if it's not an array
+                  <span className="w-full inline-flex">{message.text}</span>
+                )}
+                {/* Render the time */}
                 <span className="text-xs">{message.time}</span>
               </div>
             </div>
@@ -246,6 +245,8 @@ const Chat = () => {
         ))}
         {loading && <p className="text-gray-500 text-center">Loading...</p>}
       </div>
+
+      {/* Message input */}
       <div className="p-4 flex items-center bg-slate-100">
         <input
           type="text"
@@ -265,8 +266,6 @@ const Chat = () => {
 
 const mapStateToProps = (state) => ({
   adminId: state.adminId,
-  // token: state.token,
-  // chatbotLinks: state.chatbotLinks,
 });
 
 export default connect(mapStateToProps)(Chat);

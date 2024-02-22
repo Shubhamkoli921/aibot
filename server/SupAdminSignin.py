@@ -13,7 +13,7 @@ from bson import json_util
 from collections import defaultdict
 # from collections import defaultdict
 import logging
-
+import json
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 import pandas as pd
@@ -93,14 +93,296 @@ def before_request():
     g.admin_id = request.args.get('admin_id', '') 
 
 
+# @app.route('/chat', methods=['POST'])
+# def chat():
+#     if request.method == 'POST':
+#         try:
+#             user_query = request.json.get('message', '').lower()
+#             user_id = request.json.get('userId', '')
+#             user_name = request.json.get('userName', '')
+#             admin_id = g.admin_id
+
+#             # Insert user's message into the database
+#             chat_history_user = {
+#                 "user_id": user_id,
+#                 "user_name": user_name,
+#                 "admin_id": admin_id,
+#                 "role": "user",
+#                 "message": user_query,
+#                 "timestamp": get_current_timestamp()
+#             }
+#             demochats.insert_one(chat_history_user)
+
+#             # Generate bot's response
+#             bot_response = generate_bot_response(user_query, user_id, user_name, admin_id)
+
+#             # Format bot's response including user's message
+#             bot_response_with_user_message = f"\n{bot_response}"
+
+#             # Insert bot's response into the database
+#             chat_history_bot = {
+#                 "user_id": user_id,
+#                 "user_name": user_name,
+#                 "admin_id": admin_id,
+#                 "role": "bot",
+#                 "message": bot_response_with_user_message,
+#                 "timestamp": get_current_timestamp()
+#             }
+#             demochats.insert_one(chat_history_bot)
+
+#             # Return the formatted bot response
+#             return bot_response, 200
+#         except Exception as e:
+#             print('Error:', e)
+#             response_data = {'message': 'An error occurred. Please try again later.'}
+#             return jsonify(response_data), 500
+
+
+# def generate_bot_response(user_query, user_id, user_name, admin_id):
+#     if 'product details' in user_query:
+#         return get_product_details_response()
+#     elif 'below' in user_query and any(char.isdigit() for char in user_query):
+#         return get_products_below_price_response(user_query)
+#     elif 'above' in user_query and any(char.isdigit() for char in user_query):
+#         return get_products_above_price_response(user_query)
+#     elif 'description' in user_query:
+#         return get_product_description_response(user_query)
+#     elif 'range' in user_query and any(char.isdigit() for char in user_query):
+#         min_price, max_price = extract_price_range(user_query)
+#         return get_products_in_price_range_response(min_price, max_price)
+#     elif 'specific price' in user_query:
+#         return get_products_by_specific_price_response(user_query)
+#     elif 'price is' in user_query and any(char.isdigit() for char in user_query):
+#         price = extract_specific_price(user_query)
+#         return get_products_by_specific_price_response(price)
+#     else:
+#         return get_products_by_name_response(user_query)
+
+
+# def format_product_details(products):
+#     if products:
+#         formatted_results = []
+#         for i, product in enumerate(products, start=1):
+#             formatted_product = f"{i}. Product Name: {product['productName']}, Price: {product['price']}, Description: {product['description']}"
+#             formatted_results.append(formatted_product)
+#         return "\n".join(formatted_results)
+#     else:
+#         return "No products found."
+
+
+# def get_product_details_response():
+#     search_results = get_all_products()
+#     return format_product_details(search_results)
+
+# def find_product_by_name(product_name):
+#     # Implement logic to search for the product in the database
+#     # This could involve querying your database or accessing your product data in some way
+#     # Return the product if found, otherwise return None
+#     # Example:
+#     product = productdetail.find_one({"productName": product_name})
+#     return product
+
+# def get_product_description_response(user_query):
+#     product_name = extract_product_name(user_query)
+#     if product_name:
+#         product = find_product_by_name(product_name)
+#         if product:
+#             return product['description']
+#         else:
+#             return "Product not found."
+#     else:
+#         return "Please specify the product name."
+
+# def extract_specific_price(user_query):
+#     try:
+#         # Use regular expression to extract the price from the user query
+#         price_match = re.search(r'\b\d+\b', user_query)
+#         if price_match:
+#             price = float(price_match.group())
+#             return price
+#         else:
+#             return None
+#     except ValueError:
+#         return None
+
+# def get_products_by_specific_price_response(price):
+#     # Query the database to find products with the specified price
+#     matching_products = search_products_by_specific_price(price)
+    
+#     if matching_products:
+#         return format_product_details(matching_products)
+#     else:
+#         return "No products found at the specified price."
+
+
+# def search_products_by_specific_price(price):
+#     # Assume you're using MongoDB and your collection is named 'products'
+#     query = {"price": price}
+#     matching_products = productdetail.find(query)
+#     return list(matching_products)
+
+
+# def extract_product_name(user_query):
+#     # Define patterns to match product names
+#     patterns = [
+#         r'(?:describe|description of)\s+(?P<product_name>.+)',
+#         r'(?:details|detail of)\s+(?P<product_name>.+)'
+#     ]
+
+#     # Loop through patterns to find a match
+#     for pattern in patterns:
+#         match = re.search(pattern, user_query)
+#         if match:
+#             # Extract the product name from the matched group   
+#             product_name = match.group('product_name').strip()
+#             return product_name
+
+#     # If no match is found, return None
+#     return None
+
+# def search_products_above_price(min_price):
+#     query = {'price': {'$gt': min_price}}
+#     return list(productdetail.find(query))
+
+# def get_products_below_price_response(user_query):
+#     max_price = extract_price(user_query)
+#     if max_price:
+#         search_results = search_products_below_price(max_price)
+#         if search_results:
+#             return format_product_details(search_results)
+#         else:
+#             return "No products found below the specified price."
+#     else:
+#         return "Please specify a valid price to search for products below."
+
+
+# def get_products_above_price_response(user_query):
+#     min_price = extract_price(user_query)
+#     if min_price:
+#         search_results = search_products_above_price(min_price)
+#         if search_results:
+#             return format_product_details(search_results)
+#         else:
+#             return "No products found above the specified price."
+#     else:
+#         return "Please specify a valid price to search for products above."
+
+# def get_products_by_name_response(user_query):
+#     search_results = search_products_by_name(user_query)
+#     if search_results:
+#         return format_product_details(search_results)
+#     else:
+#         return "No products found matching your search criteria."
+
+# def get_products_in_price_range_response(min_price, max_price):
+#     # Perform a query to retrieve products within the specified price range
+#     # Assuming productdetail is a database collection or an appropriate data structure
+#     query = {
+#         'price': {'$gte': min_price, '$lte': max_price}
+#     }
+#     matching_products = productdetail.find(query)
+#     products_list = list(matching_products)
+#     return format_product_details(products_list)
+
+# def extract_price_range(query):
+#     try:
+#         # Split the query to extract the price range
+#         parts = query.split('range between')
+#         if len(parts) != 2:
+#             return None, None
+        
+#         # Extract and strip the minimum and maximum prices
+#         min_price, max_price = parts[1].strip().split('to')
+        
+#         # Convert prices to float
+#         min_price = float(min_price.strip())
+#         max_price = float(max_price.strip())
+        
+#         return min_price, max_price
+#     except ValueError:
+#         return None, None
+
+
+# def get_specific_product_price_response(user_query):
+#     product_name = extract_product_name(user_query)
+#     if product_name:
+#         product = find_product_by_name(product_name)
+#         if product:
+#             return f"The price of {product_name} is {product['price']}"
+#         else:
+#             return "Product not found."
+#     else:
+#         return "Please specify the product name."
+
+# def extract_price(query):
+#     try:
+#         if 'below' in query:
+#             price_str = query.split('below')[-1].strip()
+#         elif 'above' in query:
+#             price_str = query.split('above')[-1].strip()
+#         else:
+#             return None
+#         return float(price_str)
+#     except ValueError:
+#         return None
+
+
+# def format_product_details(products):
+#     if products:
+#         formatted_results = []
+#         for product in products:
+#             formatted_product = {
+#                 'productName': product['productName'],
+#                 'price': product['price'],
+#                 'description': product['description']
+#             }
+#             formatted_results.append(formatted_product)
+#         return formatted_results
+#     else:
+#         return "No products found."
+
+# def search_products_by_name(product_name):
+#     query = {"productName": {"$regex": product_name, "$options": "i"}}
+#     return list(productdetail.find(query))
+
+# def get_all_products():
+#     return list(productdetail.find({}, {'_id': 0}))
+
+# def search_products_below_price(max_price):
+#     query = {'price': {'$lt': max_price}}
+#     return list(productdetail.find(query))
+
+# def get_current_timestamp():
+#     return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+# def search_products_by_price(user_query, min_price, max_price):
+#     query = {
+#         'Price': {'$gte': min_price, '$lte': max_price}
+#     }
+#     matching_products = productdetail.find(query)
+#     products_list = list(matching_products)
+#     return products_list
+
+
+# def format_product_details(products):
+#     if products:
+#         formatted_results = []
+#         for i, product in enumerate(products, start=1):
+#             formatted_product = f"{i}. a. Product Name: {product['productName']}\n   b. Price: {product['price']}\n   c. Description: {product['description']}"
+#             formatted_results.append(formatted_product)
+#         return "\n".join(formatted_results)
+#     else:
+#         return "No products found."
+
+
 @app.route('/chat', methods=['POST'])
 def chat():
-    if request.method == 'POST':
-        try:
+    try:
+        if request.method == 'POST':
             user_query = request.json.get('message', '').lower()
             user_id = request.json.get('userId', '')
             user_name = request.json.get('userName', '')
-            admin_id = g.admin_id
+            admin_id = g.admin_id  # Assuming admin_id is available in Flask globals
 
             # Insert user's message into the database
             chat_history_user = {
@@ -131,248 +413,85 @@ def chat():
             demochats.insert_one(chat_history_bot)
 
             # Return the formatted bot response
-            return bot_response, 200
-        except Exception as e:
-            print('Error:', e)
-            response_data = {'message': 'An error occurred. Please try again later.'}
-            return jsonify(response_data), 500
-
+            return jsonify({'message': bot_response}), 200
+    except Exception as e:
+        print('Error:', e)
+        response_data = {'message': 'An error occurred. Please try again later.'}
+        return jsonify(response_data), 500
 
 def generate_bot_response(user_query, user_id, user_name, admin_id):
     if 'product details' in user_query:
         return get_product_details_response()
-    elif 'below' in user_query and any(char.isdigit() for char in user_query):
-        return get_products_below_price_response(user_query)
-    elif 'above' in user_query and any(char.isdigit() for char in user_query):
-        return get_products_above_price_response(user_query)
     elif 'description' in user_query:
         return get_product_description_response(user_query)
-    elif 'range' in user_query and any(char.isdigit() for char in user_query):
-        min_price, max_price = extract_price_range(user_query)
-        return get_products_in_price_range_response(min_price, max_price)
-    elif 'specific price' in user_query:
-        return get_products_by_specific_price_response(user_query)
-    elif 'price is' in user_query and any(char.isdigit() for char in user_query):
-        price = extract_specific_price(user_query)
-        return get_products_by_specific_price_response(price)
+    elif 'below' in user_query:
+        max_price = extract_price(user_query)
+        return get_products_below_price_response(max_price)
+    elif 'above' in user_query:
+        min_price = extract_price(user_query)
+        return get_products_above_price_response(min_price)
     else:
-        return get_products_by_name_response(user_query)
-
-
-def format_product_details(products):
-    if products:
-        formatted_results = []
-        for i, product in enumerate(products, start=1):
-            formatted_product = f"{i}. Product Name: {product['productName']}, Price: {product['price']}, Description: {product['description']}"
-            formatted_results.append(formatted_product)
-        return "\n".join(formatted_results)
-    else:
-        return "No products found."
-
+        return "I'm sorry, I didn't understand your query. How can I assist you?"
 
 def get_product_details_response():
     search_results = get_all_products()
     return format_product_details(search_results)
 
-def find_product_by_name(product_name):
-    # Implement logic to search for the product in the database
-    # This could involve querying your database or accessing your product data in some way
-    # Return the product if found, otherwise return None
-    # Example:
-    product = productdetail.find_one({"productName": product_name})
-    return product
-
 def get_product_description_response(user_query):
-    product_name = extract_product_name(user_query)
-    if product_name:
-        product = find_product_by_name(product_name)
-        if product:
-            return product['description']
-        else:
-            return "Product not found."
+    product_name = user_query.split('description of ')[-1]
+    product = find_product_by_name(product_name)
+    if product:
+        return product['description']
     else:
-        return "Please specify the product name."
+        return "Product not found."
 
-def extract_specific_price(user_query):
-    try:
-        # Use regular expression to extract the price from the user query
-        price_match = re.search(r'\b\d+\b', user_query)
-        if price_match:
-            price = float(price_match.group())
-            return price
-        else:
-            return None
-    except ValueError:
-        return None
+def get_products_below_price_response(max_price):
+    matching_products = [p for p in productdetail.find({"price": {"$lt": max_price}})]
+    return format_product_details(matching_products)
 
-def get_products_by_specific_price_response(price):
-    # Query the database to find products with the specified price
-    matching_products = search_products_by_specific_price(price)
-    
-    if matching_products:
-        return format_product_details(matching_products)
-    else:
-        return "No products found at the specified price."
-
-
-def search_products_by_specific_price(price):
-    # Assume you're using MongoDB and your collection is named 'products'
-    query = {"price": price}
-    matching_products = productdetail.find(query)
-    return list(matching_products)
-
-
-def extract_product_name(user_query):
-    # Define patterns to match product names
-    patterns = [
-        r'(?:describe|description of)\s+(?P<product_name>.+)',
-        r'(?:details|detail of)\s+(?P<product_name>.+)'
-    ]
-
-    # Loop through patterns to find a match
-    for pattern in patterns:
-        match = re.search(pattern, user_query)
-        if match:
-            # Extract the product name from the matched group   
-            product_name = match.group('product_name').strip()
-            return product_name
-
-    # If no match is found, return None
-    return None
-
-def search_products_above_price(min_price):
-    query = {'price': {'$gt': min_price}}
-    return list(productdetail.find(query))
-
-def get_products_below_price_response(user_query):
-    max_price = extract_price(user_query)
-    if max_price:
-        search_results = search_products_below_price(max_price)
-        if search_results:
-            return format_product_details(search_results)
-        else:
-            return "No products found below the specified price."
-    else:
-        return "Please specify a valid price to search for products below."
-
-
-def get_products_above_price_response(user_query):
-    min_price = extract_price(user_query)
-    if min_price:
-        search_results = search_products_above_price(min_price)
-        if search_results:
-            return format_product_details(search_results)
-        else:
-            return "No products found above the specified price."
-    else:
-        return "Please specify a valid price to search for products above."
-
-def get_products_by_name_response(user_query):
-    search_results = search_products_by_name(user_query)
-    if search_results:
-        return format_product_details(search_results)
-    else:
-        return "No products found matching your search criteria."
-
-def get_products_in_price_range_response(min_price, max_price):
-    # Perform a query to retrieve products within the specified price range
-    # Assuming productdetail is a database collection or an appropriate data structure
-    query = {
-        'price': {'$gte': min_price, '$lte': max_price}
-    }
-    matching_products = productdetail.find(query)
-    products_list = list(matching_products)
-    return format_product_details(products_list)
-
-def extract_price_range(query):
-    try:
-        # Split the query to extract the price range
-        parts = query.split('range between')
-        if len(parts) != 2:
-            return None, None
-        
-        # Extract and strip the minimum and maximum prices
-        min_price, max_price = parts[1].strip().split('to')
-        
-        # Convert prices to float
-        min_price = float(min_price.strip())
-        max_price = float(max_price.strip())
-        
-        return min_price, max_price
-    except ValueError:
-        return None, None
-
-
-def get_specific_product_price_response(user_query):
-    product_name = extract_product_name(user_query)
-    if product_name:
-        product = find_product_by_name(product_name)
-        if product:
-            return f"The price of {product_name} is {product['price']}"
-        else:
-            return "Product not found."
-    else:
-        return "Please specify the product name."
-
-def extract_price(query):
-    try:
-        if 'below' in query:
-            price_str = query.split('below')[-1].strip()
-        elif 'above' in query:
-            price_str = query.split('above')[-1].strip()
-        else:
-            return None
-        return float(price_str)
-    except ValueError:
-        return None
-
-
-def format_product_details(products):
-    if products:
-        formatted_results = []
-        for product in products:
-            formatted_product = {
-                'productName': product['productName'],
-                'price': product['price'],
-                'description': product['description']
-            }
-            formatted_results.append(formatted_product)
-        return formatted_results
-    else:
-        return "No products found."
-
-def search_products_by_name(product_name):
-    query = {"productName": {"$regex": product_name, "$options": "i"}}
-    return list(productdetail.find(query))
+def get_products_above_price_response(min_price):
+    matching_products = [p for p in productdetail.find({"price": {"$gt": min_price}})]
+    return format_product_details(matching_products)
 
 def get_all_products():
-    return list(productdetail.find({}, {'_id': 0}))
-
-def search_products_below_price(max_price):
-    query = {'price': {'$lt': max_price}}
-    return list(productdetail.find(query))
+    return list(productdetail.find())
 
 def get_current_timestamp():
     return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-def search_products_by_price(user_query, min_price, max_price):
-    query = {
-        'Price': {'$gte': min_price, '$lte': max_price}
-    }
-    matching_products = productdetail.find(query)
-    products_list = list(matching_products)
-    return products_list
-
+def extract_price(query):
+    try:
+        # Extract price from the query
+        price_str = re.search(r'\d+(\.\d+)?', query).group()
+        return float(price_str)
+    except:
+        return None
 
 def format_product_details(products):
     if products:
         formatted_results = []
         for i, product in enumerate(products, start=1):
-            formatted_product = f"{i}. a. Product Name: {product['productName']}\n   b. Price: {product['price']}\n   c. Description: {product['description']}"
-            formatted_results.append(formatted_product)
-        return "\n".join(formatted_results)
+            product_details = {
+                "Number": i,
+                "ProductName": product['productName'],
+                "Price": product['price'],
+                "Description": product['description']
+            }
+            formatted_results.append(product_details)
+        return formatted_results
     else:
-        return "No products found."
+        return {"message": "No products found."}
+
+
+# Assuming products is a list of product dictionaries
+formatted_products = format_product_details(products)
+formatted_products_json = json.dumps(formatted_products, indent=4)
+print(formatted_products_json)
+
+
+
+
+
 
 @app.route('/chat/history', methods=['GET'])
 @jwt_required()
