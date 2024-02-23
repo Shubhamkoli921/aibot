@@ -420,18 +420,119 @@ def chat():
         return jsonify(response_data), 500
 
 def generate_bot_response(user_query, user_id, user_name, admin_id):
-    if 'product details' in user_query:
-        return get_product_details_response()
-    elif 'description' in user_query:
-        return get_product_description_response(user_query)
-    elif 'below' in user_query:
-        max_price = extract_price(user_query)
-        return get_products_below_price_response(max_price)
-    elif 'above' in user_query:
-        min_price = extract_price(user_query)
-        return get_products_above_price_response(min_price)
-    else:
-        return "I'm sorry, I didn't understand your query. How can I assist you?"
+    # Define variations for different types of queries
+    variations = {
+        "exact price": ["exact price of", "items priced at exactly","exact price is", "products that cost exactly", "specific price of", "exact price of", "priced exactly", "products with a fixed price of", "products that have a specific price of", "priced at", "exact cost of", "items with a fixed price of", "priced exactly", "items with the specific price of", "products that are exactly", "products with the fixed price of", "price set at", "products that have a price of", "priced at exactly", "specific price tag of", "products that are priced exactly", "items that cost exactly", "set price of", "items with the specific price of", "products with the fixed price of", "items that have a specific price of", "products at the specific price of", "items that are priced at exactly", "products that are tagged at exactly", "products priced at the specific cost of", "products that have a fixed price of"],
+        "product description": ["product description","the description", "product description of","description of", "information about this product", "details for this product", "information on this item", "details about this product", "information about this item", "more about this product", "details about this item", "details on this product", "details about this product", "details for this item", "learn more about this product", "provide details about this product", "information about this product", "more information about this product", "more about this product", "details about this product", "information about this product", "more information on this product", "details about this product", "more about this product", "details for this product", "information on this product", "details for this product", "information about this product", "information about this product", "more information about this product", "details for this product", "information about this product", "details about this product"],
+        # Add more variations for other types of queries
+        "price above": ["price above", "products above price",  "products priced higher than", "price is above",  "price higher than", "products that cost more than", "priced above", "products with prices above"],
+        "price below": ["price below", "products below price","price is below","price under", "price is under", "products priced lower than","price lower than", "products that cost less than", "priced below", "products with prices below"],
+        "all products": ["all products", "show all products", "display all products", "list all products", "every product"]
+    } 
+
+    # Check each variation category
+    for variation_category, variations_list in variations.items():
+        for variation in variations_list:
+            if variation in user_query:
+                # Call corresponding function based on variation category
+                if variation_category == "exact price":
+                    return get_products_exact_price_response(user_query)
+                elif variation_category == "product description":
+                    return get_product_description_response(user_query)
+                elif variation_category == "price above":
+                    return get_product_price_above(user_query)
+                elif variation_category == "price below":
+                    return get_product_price_below(user_query)
+                elif variation_category == "all products":
+                    return get_all_productss()  # Remove the argument here
+
+                # Add more conditions for other variation categories
+
+    # If no variation matches, return default response
+    return "I'm sorry, I didn't understand your query. How can I assist you?"
+
+def get_all_productss():
+    # Retrieve all documents from the productdetail collection
+    products = list(productdetail.find())
+
+    # Convert ObjectId fields to strings
+    for product in products:
+        product['_id'] = str(product['_id'])
+
+    return products
+
+
+def get_products_exact_price_response(user_query):
+    try:
+        # Extract the exact price mentioned in the user's query
+        exact_price = extract_exact_price(user_query)
+        
+        # Query the database to find products with the exact price
+        matching_products = [p for p in productdetail.find({"price": exact_price})]
+
+        # Format the response with the matching products
+        if matching_products:
+            return format_product_details(matching_products)
+        else:
+            return "No products found with the exact price."
+
+    except Exception as e:
+        print('Error:', e)
+        return "An error occurred while fetching product details."
+
+def find_product_by_name(product_name):
+    try:
+        # Query the database to find the product by name
+        product = productdetail.find_one({"productName": product_name})
+        return product
+    except Exception as e:
+        print('Error:', e)
+        return None
+
+def get_product_price_above(user_query):
+    try:
+        # Extract the price mentioned in the user's query
+        price = extract_price(user_query)
+
+        # Query the database to find products with prices above the specified price
+        matching_products = [p for p in productdetail.find({"price": {"$gt": price}})]
+
+        # Format the response with the matching products
+        if matching_products:
+            return format_product_details(matching_products)
+        else:
+            return "No products found with prices above the specified amount."
+
+    except Exception as e:
+        print('Error:', e)
+        return "An error occurred while fetching product details."
+
+def get_product_price_below(user_query):
+    try:
+        # Extract the price mentioned in the user's query
+        price = extract_price(user_query)
+        
+        # Query the database to find products priced below the specified amount
+        matching_products = [p for p in productdetail.find({"price": {"$lt": price}})]
+
+        # Format the response with the matching products
+        if matching_products:
+            return format_product_details(matching_products)
+        else:
+            return "No products found priced below the specified amount."
+
+    except Exception as e:
+        print('Error:', e)
+        return "An error occurred while fetching product details."
+
+def extract_exact_price(query):
+    try:
+        # Extract the exact price from the query
+        price_str = re.search(r'\d+(\.\d+)?', query).group()
+        return float(price_str)
+    except:
+        return None
+
 
 def get_product_details_response():
     search_results = get_all_products()
@@ -459,13 +560,7 @@ def get_all_products():
 def get_current_timestamp():
     return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-def extract_price(query):
-    try:
-        # Extract price from the query
-        price_str = re.search(r'\d+(\.\d+)?', query).group()
-        return float(price_str)
-    except:
-        return None
+
 
 def format_product_details(products):
     if products:
