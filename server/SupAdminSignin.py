@@ -524,7 +524,14 @@ def get_product_price_below(user_query):
     except Exception as e:
         print('Error:', e)
         return "An error occurred while fetching product details."
-
+        
+def extract_price(query):
+    try:
+        # Extract price from the query
+        price_str = re.search(r'\d+(\.\d+)?', query).group()
+        return float(price_str)
+    except:
+        return None
 def extract_exact_price(query):
     try:
         # Extract the exact price from the query
