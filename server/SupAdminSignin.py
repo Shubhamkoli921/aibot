@@ -422,13 +422,13 @@ def chat():
 def generate_bot_response(user_query, user_id, user_name, admin_id):
     # Define variations for different types of queries
     variations = {
-        "exact price": ["exact price of", "items priced at exactly","exact price is", "products that cost exactly", "specific price of", "exact price of", "priced exactly", "products with a fixed price of", "products that have a specific price of", "priced at", "exact cost of", "items with a fixed price of", "priced exactly", "items with the specific price of", "products that are exactly", "products with the fixed price of", "price set at", "products that have a price of", "priced at exactly", "specific price tag of", "products that are priced exactly", "items that cost exactly", "set price of", "items with the specific price of", "products with the fixed price of", "items that have a specific price of", "products at the specific price of", "items that are priced at exactly", "products that are tagged at exactly", "products priced at the specific cost of", "products that have a fixed price of"],
-        "product description": ["product description","the description", "product description of","description of", "information about this product", "details for this product", "information on this item", "details about this product", "information about this item", "more about this product", "details about this item", "details on this product", "details about this product", "details for this item", "learn more about this product", "provide details about this product", "information about this product", "more information about this product", "more about this product", "details about this product", "information about this product", "more information on this product", "details about this product", "more about this product", "details for this product", "information on this product", "details for this product", "information about this product", "information about this product", "more information about this product", "details for this product", "information about this product", "details about this product"],
+        "exact price": ["exact price of", "items priced at exactly", "exact price is", "products that cost exactly", "specific price of", "exact price of", "priced exactly", "products with a fixed price of", "products that have a specific price of", "priced at", "exact cost of", "items with a fixed price of", "priced exactly", "items with the specific price of", "products that are exactly", "products with the fixed price of", "price set at", "products that have a price of", "priced at exactly", "specific price tag of", "products that are priced exactly", "items that cost exactly", "set price of", "items with the specific price of", "products with the fixed price of", "items that have a specific price of", "products at the specific price of", "items that are priced at exactly", "products that are tagged at exactly", "products priced at the specific cost of", "products that have a fixed price of"],
+        "product description": ["product description", "the description", "product description of", "description of", "information about this product", "details for this product", "information on this item", "details about this product", "information about this item", "more about this product", "details about this item", "details on this product", "details about this product", "details for this item", "learn more about this product", "provide details about this product", "information about this product", "more information about this product", "more about this product", "details about this product", "information about this product", "more information on this product", "details about this product", "more about this product", "details for this product", "information on this product", "details for this product", "information about this product", "information about this product", "more information about this product", "details for this product", "information about this product", "details about this product"],
         # Add more variations for other types of queries
-        "price above": ["price above", "products above price",  "products priced higher than", "price is above",  "price higher than", "products that cost more than", "priced above", "products with prices above"],
-        "price below": ["price below", "products below price","price is below","price under", "price is under", "products priced lower than","price lower than", "products that cost less than", "priced below", "products with prices below"],
-        "all products": ["all products", "show all products", "display all products", "list all products", "every product"]
-    } 
+        "price above": ["price above", "products above price", "products priced higher than", "price is above", "price higher than", "products that cost more than", "priced above", "products with prices above"],
+        "price below": ["price below", "products below price", "price is below", "price under", "price is under", "products priced lower than", "price lower than", "products that cost less than", "priced below", "products with prices below"],
+        
+    }
 
     # Check each variation category
     for variation_category, variations_list in variations.items():
@@ -436,20 +436,39 @@ def generate_bot_response(user_query, user_id, user_name, admin_id):
             if variation in user_query:
                 # Call corresponding function based on variation category
                 if variation_category == "exact price":
-                    return get_products_exact_price_response(user_query)
+                    response = get_products_exact_price_response(user_query)
+                    return format_product_response(response)
                 elif variation_category == "product description":
-                    return get_product_description_response(user_query)
+                    response = get_product_description_response(user_query)
+                    return format_product_response(response)
                 elif variation_category == "price above":
-                    return get_product_price_above(user_query)
+                    response = get_product_price_above(user_query)
+                    return format_product_response(response)
                 elif variation_category == "price below":
-                    return get_product_price_below(user_query)
-                elif variation_category == "all products":
-                    return get_all_productss()  # Remove the argument here
-
+                    response = get_product_price_below(user_query)
+                    return format_product_response(response)
                 # Add more conditions for other variation categories
 
     # If no variation matches, return default response
     return "I'm sorry, I didn't understand your query. How can I assist you?"
+
+def format_product_response(response):
+    if isinstance(response, list):
+        formatted_results = []
+        for i, product in enumerate(response, start=1):
+            product_details = {
+                "Number": i,
+                "ProductName": product['ProductName'],
+                "Price": product['Price'],  
+                "Description": product['Description']
+            }
+            formatted_results.append(product_details)
+        return formatted_results
+    elif isinstance(response, str):
+        return response
+    else:
+        return "Invalid response format"
+
 
 def get_all_productss():
     # Retrieve all documents from the productdetail collection
@@ -524,10 +543,10 @@ def get_product_price_below(user_query):
     except Exception as e:
         print('Error:', e)
         return "An error occurred while fetching product details."
-        
+
 def extract_price(query):
     try:
-        # Extract price from the query
+        # Extract price from the queryadded
         price_str = re.search(r'\d+(\.\d+)?', query).group()
         return float(price_str)
     except:
