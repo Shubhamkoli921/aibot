@@ -24,7 +24,7 @@ from io import StringIO
 import datetime as dt
 from collections import Counter
 from functools import wraps
-from twilio.rest import Client
+
 import openai       
 import re
 
