@@ -12,7 +12,7 @@ from bson import ObjectId
 from bson import json_util
 from collections import defaultdict
 # from flask import Flask, request, jsonify
-from twilio.twiml.messaging_response import MessagingResponse
+
 # from collections import defaultdict
 import logging
 import json
@@ -37,7 +37,7 @@ bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
 app.secret_key = 't4Wm8Y0ypwYLzcwhDmEqJg'   
 
-openai.api_key = "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"
+
 
 # Sample CSV data (replace this with the actual CSV data from MongoDB)
 csv_data = """
@@ -54,9 +54,6 @@ products = [
 
 # Load the CSV data into a Pandas DataFrame
 csv_df = pd.read_csv(StringIO(csv_data))
-
-
-# Replace the connection string with your MongoDB Atlas connection string
 atlas_connection_string = os.getenv("MONGO_URI")
 client = MongoClient(atlas_connection_string)
 db = client['chatbot']
