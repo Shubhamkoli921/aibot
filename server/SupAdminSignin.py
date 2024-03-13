@@ -55,9 +55,7 @@ products = [
 # Load the CSV data into a Pandas DataFrame
 csv_df = pd.read_csv(StringIO(csv_data))
 
-# account_sid = 'AC6a436595d1eeb0ee401714df4005a997'
-# auth_token = '4ec7aef9aa1ea578330723d7aecc9767'
-# twilio_client = Client(account_sid, auth_token)
+
 # Replace the connection string with your MongoDB Atlas connection string
 atlas_connection_string = os.getenv("MONGO_URI")
 client = MongoClient(atlas_connection_string)
