@@ -33,7 +33,7 @@ const User = () => {
     pincode: '',
     password: '',
     confirmPassword: "",
-    chatbotLink: '', // Added chatbot link state
+    websiteDomain: '', // Added website domain state
     enabled: true,
   });
   const [updatingAdminId, setUpdatingAdminId] = useState(null); // Define updatingAdminId state
@@ -52,8 +52,12 @@ const User = () => {
   };
 
   const handleInputChange = (e, fieldName) => {
-    setFormData({ ...formData, [fieldName]: e.target.value });
+    setFormData(prevFormData => ({
+      ...prevFormData,
+      [fieldName]: e.target.value
+    }));
   };
+  
 
   const fetchAdmins = useCallback(async () => {
     try {
@@ -72,7 +76,7 @@ const User = () => {
     } catch (error) {
       console.error('Error fetching admins:', error);
     }
-  }, [token,dispatch,formData]);
+  }, []);
 
   useEffect(() => {
     if (token) {
@@ -81,19 +85,23 @@ const User = () => {
   }, [token, fetchAdmins]);
 
   const handleAddAdmin = async () => {
+    const { websiteDomain, ...restFormData } = formData;
     if (formData.password !== formData.confirmPassword) {
       alert("Password and Confirm Password do not match!");
       return;
     }
 
     try {
-      const response = await fetch('https://chatbotserver1.onrender.com/admins', {
+      const response = await fetch('http://localhost:8000/admins', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...restFormData,
+          website_domain: websiteDomain, 
+        }),
       });
       if (!response.ok) {
         throw new Error('Failed to add admin');
@@ -101,7 +109,6 @@ const User = () => {
       const data = await response.json();
 
       alert("Added successfully");
-      setFormData({ ...formData, chatbotLink: data.chatbot_link }); // Set the chatbot link received from the server
       setFormData({
         name: '',
         business_name: '',
@@ -112,6 +119,7 @@ const User = () => {
         pincode: '',
         password: '',
         confirmPassword: '',
+        websiteDomain: '', // Clear website domain after adding admin
         enabled: true,
       });
       fetchAdmins();
@@ -246,9 +254,9 @@ const User = () => {
           </div>
           {{
             'ShowUser':
-              <div className="container mx-auto p-4 flex justify-center ">
-                <h2 className="text-2xl font-semibold absolute w-[900px]  shadow-md shadow-blue-300  bg-blue-500 p-4 text-white rounded-xl">User Information Table</h2>
-                <table className="flex flex-col rounded-xl w-full bg-white p-4 mt-10   ">
+              <div className="container mx-auto p-4 flex flex-col justify-center ">
+                <h2 className="text-2xl font-semibold m-auto   w-[95%] relative  shadow-md shadow-blue-300  bg-blue-500 p-4 text-white rounded-xl">User's List</h2>
+                <table className="flex flex-col rounded-xl w-full -mt-5 bg-white p-4  ">
                   <thead className="mt-5">
                     <tr className="grid grid-cols-9 text-sm text-gray-600">
                       <th className=" p-2 ">Logo</th>
@@ -361,6 +369,13 @@ const User = () => {
                     className=" border-none   items-center p-2 m-2 rounded-lg bg-gray-200 "
                     value={formData.logo}
                     onChange={(e) => handleInputChange(e, 'logo')}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Website Domain"
+                    className="border-none items-center p-2 m-2 rounded-lg bg-gray-200"
+                    value={formData.websiteDomain}
+                    onChange={(e) => handleInputChange(e, 'websiteDomain')}
                   />
 
                 </form>

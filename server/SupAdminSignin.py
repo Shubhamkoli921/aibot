@@ -11,6 +11,7 @@ from flask_pymongo import PyMongo
 from bson import ObjectId
 from bson import json_util
 from collections import defaultdict
+from urllib.parse import urlparse
 # from flask import Flask, request, jsonify
 
 # from collections import defaultdict
@@ -94,10 +95,21 @@ def before_request():
 
 
 
+# Before processing any chatbot requests, verify the domain from which the request is coming.
+# Before processing any chatbot requests, verify the domain from which the request is coming.
+@app.before_request
+def before_request():
+    g.admin_domain = urlparse(request.referrer).netloc
 
 @app.route('/chat', methods=['POST'])
 def chat():
     try:
+        admin_domain = g.admin_domain  # Get the domain from the request
+        admin = adminusersinfo.find_one({'domain': admin_domain})
+
+        if not admin:
+            return jsonify({'error': 'Unauthorized access from unknown domain'}), 403
+
         if request.method == 'POST':
             user_query = request.json.get('message', '').lower()
             user_id = request.json.get('userId', '')
@@ -120,6 +132,7 @@ def chat():
         response_data = {'message': 'An error occurred. Please try again later.'}
         return jsonify(response_data), 500
 
+
 def insert_chat_history(user_id, user_name, admin_id, message, role):
     chat_history = {
         "user_id": user_id,
@@ -137,7 +150,7 @@ def generate_bot_response(user_query, user_id, user_name, admin_id):
         "product description": ["product description", "the description", "product description of", "description of", "information about this product", "details for this product", "information on this item", "details about this product", "information about this item", "more about this product", "details about this item", "details on this product", "details about this product", "details for this item", "learn more about this product", "provide details about this product", "information about this product", "more information about this product", "more about this product", "details about this product", "information about this product", "more information on this product", "details about this product", "more about this product", "details for this product", "information on this product", "details for this product", "information about this product", "information about this product", "more information about this product", "details for this product", "information about this product", "details about this product"],
         "all products": ["all products", "list all products", "show all products", "products available", "all available products", "product list", "display all products", "every product", "every item"],
         "price above": ["price above", "products above price", "products priced higher than", "price is above", "price higher than", "products that cost more than", "priced above", "products with prices above"],
-        "price below": ["price below", "products below price", "price is below", "price under", "price is under", "products priced lower than", "price lower than", "products that cost less than", "priced below", "products with prices below"],
+        "price below": ["price below", "products below price","products under price", "product under", "products under", "price is below", "price under", "price is under", "products priced lower than", "price lower than", "products that cost less than", "priced below", "products with prices below"],
     }
 
     for variation_category, variations_list in variations.items():
@@ -260,53 +273,6 @@ print(formatted_products_json)
 
 
 
-# @app.route('/chattw', methods=['POST'])
-# def chat():
-#     try:
-#         # Get the incoming message from Twilio
-#         incoming_msg = request.values.get('Body', '').lower()
-#         sender_phone_number = request.values.get('From', '')
-
-#         # Process the incoming message
-#         response_msg = process_message(incoming_msg, sender_phone_number)
-
-#         # Send a response back to the sender
-#         twilio_resp = MessagingResponse()
-#         twilio_resp.message(response_msg)
-
-#         return str(twilio_resp)
-#     except Exception as e:
-#         print('Error:', e)
-#         response_data = {'message': 'An error occurred. Please try again later.'}
-#         return jsonify(response_data), 500
-
-# def process_message(incoming_msg, sender_phone_number):
-#     # Sample logic to process incoming messages
-#     if 'hello' in incoming_msg:
-#         response_msg = "Hello! How can I assist you today?"
-#     elif 'price' in incoming_msg:
-#         response_msg = "We have various products available. Please specify the product you are interested in."
-#     elif 'description' in incoming_msg:
-#         response_msg = "Please provide the name of the product you want the description for."
-#     else:
-#         response_msg = "I'm sorry, I didn't understand your message. Please try again."
-
-#     # Send a message using Twilio
-#     send_whatsapp_message(sender_phone_number, response_msg)
-
-#     return response_msg
-
-# def send_whatsapp_message(to_number, message):
-#     try:
-#         # Send a message using Twilio
-#         twilio_client.messages.create(
-#             from_='whatsapp:+14155238886',
-#             body=message,
-#             to=f'whatsapp:{to_number}'
-#         )
-#         print("Message sent successfully")
-#     except Exception as e:
-#         print("Error sending message:", e)
 
 @app.route('/chat/history', methods=['GET'])
 @jwt_required()
@@ -341,13 +307,7 @@ def get_chat_history():
         for chat in admin_chat_history:
             user_chat_history_grouped[chat['user_name']].append(chat)
 
-        # admin_chat_histories = {}
-        # for admin in admins:
-        #     admin_id = str(admin['_id'])
-        #     admin_name = admin['name']
-                
-        #     # Retrieve chat history for the current admin
-        #     # admin_chat_history = list(demochats.find({"admin_id": admin_id}))
+        
 
         formatted_chat_history = []
         for user_name, chat_history in user_chat_history_grouped.items():
@@ -366,13 +326,7 @@ def get_chat_history():
                 "data": formatted_chat_data
             })
 
-        # user_chat_counts = {}
-        # for chat in admin_chat_history:
-        #     user_id = chat['user_id']
-        #     if user_id in user_chat_counts:
-        #         user_chat_counts[user_id] += 1
-        #     else:
-        #         user_chat_counts[user_id] = 1
+      
 
 
         admins_chat_history = {}  # Define a dictionary to hold admin chat histories
@@ -384,10 +338,7 @@ def get_chat_history():
             chat_history = list(demochats.find({"admin_id": admin_id}))
             admins_chat_history[admin_name] = chat_history
 
-        # admin_chat_histories[admin_id] = {
-        #         "admin_name": admin_name,
-        #         "chat_history": formatted_chat_history
-        #     }
+        
 
         
 
@@ -403,9 +354,7 @@ def get_chat_history():
             "daywise_chat_counts": daywise_chat_counts,
             "monthwise_chat_counts": monthwise_chat_counts,
             "chat_history": formatted_chat_history,
-            # 'user_chat_counts': user_chat_counts,
-            # 'counts':admin_chat_history,
-            # 'alladminchats':admin_chat_histories,
+           
             
         }
 
@@ -571,8 +520,9 @@ def add_admin():
         existing_admin = adminusersinfo.find_one({'name': data['name']})
         if existing_admin:
             return jsonify({'error': 'Username already exists'}), 400
-
-        hashed_password = generate_password_hash(data['password'])
+        
+        # Store the domain information
+        admin_domain = urlparse(request.referrer).netloc
         new_admin = {
             'name': data['name'],
             'business_name': data['business_name'],
@@ -581,9 +531,12 @@ def add_admin():
             'phone': data['phone'],
             'city': data['city'],
             'pincode': data['pincode'],
-            'password': hashed_password,
             'enabled': True
         }
+
+        hashed_password = generate_password_hash(data['password'])
+        new_admin['password'] = hashed_password
+
         admin_id = adminusersinfo.insert_one(new_admin).inserted_id
 
         # Create chatbot link based on admin_id
